@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 setup(
@@ -13,7 +13,7 @@ setup(
     license="MIT",
     author="Lotrèk Digital Agency",
     author_email="dimmitutto@lotrek.it",
-    packages=find_packages(),
+    packages=["verificac19"],
     classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
