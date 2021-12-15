@@ -26,7 +26,19 @@ class Service:
         return cls._dsc_collection.get(kid)
 
     @classmethod
-    def is_blacklisted(cls, uvci: str):
+    def is_blacklisted(cls, uvci: str) -> bool:
+        """Checks whether a green pass is blacked list
+        Parameters
+        ----------
+        uvci: str
+            the identifier of the green pass
+
+        Returns
+        -------
+        bool
+            whether is blacked list or not.
+        """
+
         blacklist = cls.get_setting('black_list_uvci', 'black_list_uvci')
         blacklisted_ucvi = blacklist.get('value').split(';')
         return uvci in blacklisted_ucvi
