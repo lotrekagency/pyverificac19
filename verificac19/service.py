@@ -1,15 +1,20 @@
 import requests
-import os.path
+import os
 import json
 from typing import Any
+import pathlib
+
+CACHE_DATA_DIRECTORY = str(pathlib.Path(__file__).parent.resolve()) + '/cache_data/'
+if not os.path.exists(CACHE_DATA_DIRECTORY):
+    os.mkdir(CACHE_DATA_DIRECTORY)
 
 class Service:
 
     DSC_URL = 'https://get.dgc.gov.it/v1/dgc/signercertificate/update'
     SETTINGS_URL = 'https://get.dgc.gov.it/v1/dgc/settings'
 
-    DSC_FILE_CACHE_PATH = 'cache_data/dsc.json'
-    SETTINGS_FILE_CACHE_PATH = 'cache_data/settings.json'
+    DSC_FILE_CACHE_PATH = CACHE_DATA_DIRECTORY + 'dsc.json'
+    SETTINGS_FILE_CACHE_PATH = CACHE_DATA_DIRECTORY + 'settings.json'
 
     _settings = []
     _dsc_collection = {}
