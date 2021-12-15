@@ -33,7 +33,7 @@ class Service:
         
     @classmethod
     def get_setting(cls, dsc_name, dsc_type):
-        return next([ setting for setting in cls.settings if setting['name'] == dsc_name and setting['type'] == dsc_type])
+        return next(iter([ setting for setting in cls.settings if setting['name'] == dsc_name and setting['type'] == dsc_type]))
 
     @classmethod
     def _fetch_dsc(cls, token: str=None, dsc_collection: dict={}):
@@ -54,7 +54,7 @@ class Service:
     def _fetch_settings(cls):
         response = requests.get(cls.SETTINGS_URL)
         if response.status_code == 200:
-            return response.text
+            return response.json()
         return {}
 
 service = Service
