@@ -36,15 +36,19 @@ class Service:
         return next([ setting for setting in cls.settings if setting['name'] == dsc_name and setting['type'] == dsc_type])
 
     @classmethod
-    def _fetch_dsc(cls, token=None, dscs={}):
+    def _fetch_dsc(cls, token: str=None, dsc_collection: dict={}):
         headers = {
             'X-RESUME-TOKEN': token
         }
         response = requests.get(cls.DSC_URL, headers=headers)
-        if response.status_code == 200:
-            dscs[response.headers.get('X-KID')] = response.text
-            return cls._fetch_dsc(response.headers.get('X-RESUME-TOKEN'), dscs)
-        return dscs
+
+        if not response.status_code == 200:
+            return dsc_collection
+
+        x_kid = response.headers.get('X-KID')
+        dsc_collection[x_kid] = response.text
+        x_resume_token = response.headers.get('X-RESUME-TOKEN')
+        return cls._fetch_dsc(x_resume_token, dsc_collection)
 
     @classmethod
     def _fetch_settings(cls):
