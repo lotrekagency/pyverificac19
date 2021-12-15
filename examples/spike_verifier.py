@@ -18,3 +18,15 @@ dcc_not_sm._payload['v'][-1]['co'] = 'IT'
 dcc_not_sm._payload['v'][-1]['dt'] = '2022-12-10'
 dcc_not_sm._payload['v'][-1]['dn'] = '2'
 print(verifier._check_vaccination(dcc_not_sm.payload))
+
+
+dcc_not_sm = from_image('tests/data/eu_test_certificates/TEST.png')
+dcc_not_sm._payload['t'][-1]['tr'] = '1111111' # NOT VALID
+print(verifier._check_test(dcc_not_sm.payload))
+
+dcc_not_sm = from_image('tests/data/eu_test_certificates/TEST.png')
+dcc_not_sm._payload['t'][-1]['sc'] = '2021-12-15T03:03:12Z' # SHOULD BE VALID
+print(verifier._check_test(dcc_not_sm.payload))
+
+dcc_not_sm = from_image('tests/data/eu_test_certificates/TEST.png') # NOT VALID
+print(verifier._check_test(dcc_not_sm.payload))
