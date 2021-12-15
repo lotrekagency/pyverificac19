@@ -1,6 +1,6 @@
 samples/
 certs/
-
+venv/ 
 *.pyc
 .coverage
 .DS_Store
