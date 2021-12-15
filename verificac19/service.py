@@ -26,17 +26,22 @@ class Service:
         return cls._dsc_collection.get(kid)
 
     @classmethod
-    def is_blacklisted(cls, uvci):
+    def is_blacklisted(cls, uvci: str):
         blacklist = cls.get_setting('black_list_uvci', 'black_list_uvci')
         blacklisted_ucvi = blacklist.get('value').split(';')
         return uvci in blacklisted_ucvi
         
     @classmethod
-    def get_setting(cls, dsc_name, dsc_type):
-        return next(iter([ setting for setting in cls.settings if setting['name'] == dsc_name and setting['type'] == dsc_type]))
+    def get_setting(cls, setting_name: str, setting_type: str) -> dict:
+        try:
+            setting_data: dict = next(iter([ setting for setting in cls.settings if setting['name'] == setting_name and setting['type'] == setting_type]))
+            return setting_data
+        except StopIteration:
+            return {}
+
 
     @classmethod
-    def _fetch_dsc(cls, token: str=None, dsc_collection: dict={}):
+    def _fetch_dsc(cls, token: str=None, dsc_collection: dict={}) -> dict:
         headers = {
             'X-RESUME-TOKEN': token
         }
@@ -51,7 +56,7 @@ class Service:
         return cls._fetch_dsc(x_resume_token, dsc_collection)
 
     @classmethod
-    def _fetch_settings(cls):
+    def _fetch_settings(cls) -> dict:
         response = requests.get(cls.SETTINGS_URL)
         if response.status_code == 200:
             return response.json()
