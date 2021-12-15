@@ -5,9 +5,7 @@ setup(
     name="verificac19",
     version="0.0.0",
     url="https://github.com/lotrekagency/pyverificac19",
-    install_requires=[
-        "requests==2.26.01",
-    ],
+    install_requires=["requests==2.26.01", "dcc-utils==0.1.0"],
     description="VerificaC19 SDK for Python",
     long_description=open("README.rst").read(),
     license="MIT",
