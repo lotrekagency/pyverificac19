@@ -1,9 +1,15 @@
 import requests
+import os.path
+import json
+from typing import Any
 
 class Service:
 
     DSC_URL = 'https://get.dgc.gov.it/v1/dgc/signercertificate/update'
     SETTINGS_URL = 'https://get.dgc.gov.it/v1/dgc/settings'
+
+    DSC_FILE_CACHE_PATH = 'cache_data/dsc.json'
+    SETTINGS_FILE_CACHE_PATH = 'cache_data/settings.json'
 
     settings = []
     _dsc_collection = {}
@@ -73,6 +79,22 @@ class Service:
         if response.status_code == 200:
             return response.json()
         return {}
+
+    @classmethod
+    def _dump_to_cache(cls, file_path: str, data: Any) -> None:
+        with open(file_path, 'w') as output:
+            json.dump(data, output)
+
+    @classmethod
+    def _load_from_cache(cls, file_path) -> Any:
+        if not os.path.exists(cls.DSC_FILE_CACHE_PATH):
+            raise FileNotFoundError("Cache file not found.")
+
+        with open('cache_data/dsc.json', 'r') as input:
+            data = json.load(input)
+
+        return data
+
 
 service = Service
 
