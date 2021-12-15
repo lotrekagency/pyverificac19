@@ -1,5 +1,5 @@
 from .exceptions import VerificaC19Error
-
+from .service import service
 
 __version__ = "0.0.0"
 
