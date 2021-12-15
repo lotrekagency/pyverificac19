@@ -15,9 +15,15 @@ class Service:
     _dsc_collection = {}
 
     @classmethod
-    def update_all(cls):
+    def update_all(cls) -> None:
+        cls._dsc_collection = cls._load_from_cache(cls.DSC_FILE_CACHE_PATH) or cls._fetch_dsc()
+        cls.settings = cls._load_from_cache(cls.SETTINGS_FILE_CACHE_PATH) or cls._fetch_settings()
+
+
+    @classmethod
+    def _update_from_apis(cls):
         cls.settings = cls._fetch_settings()
-        cls._dsc_collection = cls._fetch_dsc()
+
 
     @classmethod
     def update_settings(cls):
@@ -66,6 +72,7 @@ class Service:
         response = requests.get(cls.DSC_URL, headers=headers)
 
         if not response.status_code == 200:
+            cls._dump_to_cache(cls.DSC_FILE_CACHE_PATH, dsc_collection)
             return dsc_collection
 
         x_kid = response.headers.get('X-KID')
@@ -77,7 +84,10 @@ class Service:
     def _fetch_settings(cls) -> dict:
         response = requests.get(cls.SETTINGS_URL)
         if response.status_code == 200:
-            return response.json()
+            settings_data = response.json()
+            cls._dump_to_cache(cls.SETTINGS_FILE_CACHE_PATH, settings_data)
+            return settings_data
+
         return {}
 
     @classmethod
@@ -87,14 +97,9 @@ class Service:
 
     @classmethod
     def _load_from_cache(cls, file_path) -> Any:
-        if not os.path.exists(cls.DSC_FILE_CACHE_PATH):
-            raise FileNotFoundError("Cache file not found.")
-
-        with open('cache_data/dsc.json', 'r') as input:
-            data = json.load(input)
-
-        return data
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as input:
+                return json.load(input)
 
 
 service = Service
-
