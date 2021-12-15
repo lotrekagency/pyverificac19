@@ -5,30 +5,35 @@ class Service:
     DSC_URL = 'https://get.dgc.gov.it/v1/dgc/signercertificate/update'
     SETTINGS_URL = 'https://get.dgc.gov.it/v1/dgc/settings'
 
+    settings = []
+    dscs = []
+
     @classmethod
     def update_all(cls):
-        settings = cls._fetch_settings()
-        dscs = cls._fetch_dsc()
+        cls.settings = cls._fetch_settings()
+        cls.dscs = cls._fetch_dsc()
 
     @classmethod
     def update_settings(cls):
-        settings = cls._fetch_settings()
+        cls.settings = cls._fetch_settings()
 
     @classmethod
     def update_dsc(cls):
-        dscs = cls._fetch_dsc()
+        cls.dscs = cls._fetch_dsc()
 
     @classmethod
-    def get_dsc(kid):
-        raise NotImplemented
+    def get_dsc(cls, kid):
+        return cls.dscs.get(kid)
 
     @classmethod
-    def is_blacklisted(uvci):
-        raise NotImplemented
-
+    def is_blacklisted(cls, uvci):
+        blacklist = cls.get_setting('black_list_uvci', 'black_list_uvci')
+        blacklisted_ucvi = blacklist.get('value').split(';')
+        return uvci in blacklisted_ucvi
+        
     @classmethod
-    def get_setting(name, type):
-        raise NotImplemented
+    def get_setting(cls, dsc_name, dsc_type):
+        return next([ setting for setting in cls.settings if setting['name'] == dsc_name and setting['type'] == dsc_type])
 
     @classmethod
     def _fetch_dsc(cls, token=None, dscs={}):
