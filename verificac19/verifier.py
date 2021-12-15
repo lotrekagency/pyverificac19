@@ -96,13 +96,32 @@ class Verifier():
         service.update_settings()
         print('Ricovero')
         print(payload)
-        last = payload['v'][-1]
-        if service.is_blacklisted(last['ci']):
+        last = payload['r'][-1]
+        recovery_start_day = int(service.get_setting('recovery_cert_start_day', "GENERIC")['value'])
+        recovery_end_day = int(service.get_setting('recovery_cert_end_day', "GENERIC")['value'])
+
+        start_date = datetime.strptime(last['df'], "%Y-%m-%d")
+        end_date = datetime.strptime(last['du'], "%Y-%m-%d")
+        start_date_validation =  start_date + timedelta(days=recovery_start_day)
+        now = datetime.now()
+
+        if start_date_validation > now:
             return {
-                "code": NOT_VALID,
+                "code": NOT_VALID_YET,
                 "result": False,
-                "message" : 'No vaccination, test or recovery statement found in payload or UVCI is in blacklist',
+                "message": 'Recovery statement is not valid yet',
             }
+        if now > start_date_validation + timedelta(days=recovery_end_day): 
+            return {
+                'code': NOT_VALID,
+                "result": False,
+                'message': 'Recovery statement is expired',
+            }
+        return {
+            'code': VALID,
+            "result": True,
+            'message': 'Recovery statement is expired',
+        }
 
     @classmethod
     def _verify(cls, dcc, super_gp_mode):
