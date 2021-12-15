@@ -11,23 +11,28 @@ class Service:
     DSC_FILE_CACHE_PATH = 'cache_data/dsc.json'
     SETTINGS_FILE_CACHE_PATH = 'cache_data/settings.json'
 
-    settings = []
+    _settings = []
     _dsc_collection = {}
 
     @classmethod
     def update_all(cls) -> None:
+        """Updates dsc and settings data
+
+        It tries to fetch data from cache if available, otherwise from web api.
+        """
+
         cls._dsc_collection = cls._load_from_cache(cls.DSC_FILE_CACHE_PATH) or cls._fetch_dsc()
-        cls.settings = cls._load_from_cache(cls.SETTINGS_FILE_CACHE_PATH) or cls._fetch_settings()
+        cls._settings = cls._load_from_cache(cls.SETTINGS_FILE_CACHE_PATH) or cls._fetch_settings()
 
 
     @classmethod
     def _update_from_apis(cls):
-        cls.settings = cls._fetch_settings()
+        cls._settings = cls._fetch_settings()
 
 
     @classmethod
     def update_settings(cls):
-        cls.settings = cls._fetch_settings()
+        cls._settings = cls._fetch_settings()
 
     @classmethod
     def update_dsc(cls):
@@ -58,7 +63,7 @@ class Service:
     @classmethod
     def get_setting(cls, setting_name: str, setting_type: str) -> dict:
         try:
-            setting_data: dict = next(iter([ setting for setting in cls.settings if setting['name'] == setting_name and setting['type'] == setting_type]))
+            setting_data: dict = next(iter([ setting for setting in cls._settings if setting['name'] == setting_name and setting['type'] == setting_type]))
             return setting_data
         except StopIteration:
             return {}
