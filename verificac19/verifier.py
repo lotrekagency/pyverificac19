@@ -21,14 +21,23 @@ class Verifier():
 
     @classmethod
     def _check_vaccination(cls, payload): 
+        service.update_settings()
+        print('Vaccino')
+        print(payload)
         last = payload['v'][-1]
+        if service.is_blacklisted(last['ci']):
+            return {
+                "code": NOT_VALID,
+                "result": False,
+                "message" : 'No vaccination, test or recovery statement found in payload or UVCI is in blacklist',
+            }
+
         if last["mp"] == "Sputnik-V" and last["co"] != "SM":
             return {
                 "code": NOT_VALID,
                 "result": False,
                 "message" : 'Vaccine Sputnik-V is valid only in San Marino',
             }
-        service.update_settings()
 
         current_dose = int(last['dn'])
         necessary_dose = int(last['sd'])
@@ -44,13 +53,13 @@ class Verifier():
             if now < check_start_day_not_complete:
                 return {
                     "code": NOT_VALID_YET,
-                    "result": True,
+                    "result": False,
                     "message" : 'Certificate is not valid yet',
                 }
             if now > check_end_day_not_complete:
                 return {
                     "code": NOT_VALID,
-                    "result": True,
+                    "result": False,
                     "message" : 'Certificate is not valid',
                 }
         else:
@@ -61,13 +70,13 @@ class Verifier():
             if now < check_start_day_complete:
                 return {
                     "code": NOT_VALID_YET,
-                    "result": True,
+                    "result": False,
                     "message" : 'Certificate is not valid yet',
                 }
             if now > check_end_day_complete:
                 return {
                     "code": NOT_VALID,
-                    "result": True,
+                    "result": False,
                     "message" : 'Certificate is not valid',
                 }
         return {
@@ -118,8 +127,16 @@ class Verifier():
 
     @classmethod
     def _check_recovery(cls, payload): 
+        service.update_settings()
         print('Ricovero')
         print(payload)
+        last = payload['v'][-1]
+        if service.is_blacklisted(last['ci']):
+            return {
+                "code": NOT_VALID,
+                "result": False,
+                "message" : 'No vaccination, test or recovery statement found in payload or UVCI is in blacklist',
+            }
 
     @classmethod
     def _verify(cls, dcc, super_gp_mode):
