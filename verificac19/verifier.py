@@ -158,6 +158,11 @@ class Verifier():
         }
 
     @classmethod
+    def _check_certificate(cls, dcc):
+        signature = ('-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----').format(service.get_dsc(dcc.kid))
+        return dcc.check_signature(signature.encode('utf-8'))
+
+    @classmethod
     def _verify(cls, dcc, super_gp_mode):
         payload = dcc.payload
         if 'v' in payload:
