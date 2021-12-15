@@ -6,12 +6,12 @@ class Service:
     SETTINGS_URL = 'https://get.dgc.gov.it/v1/dgc/settings'
 
     settings = []
-    dscs = []
+    _dsc_collection = {}
 
     @classmethod
     def update_all(cls):
         cls.settings = cls._fetch_settings()
-        cls.dscs = cls._fetch_dsc()
+        cls._dsc_collection = cls._fetch_dsc()
 
     @classmethod
     def update_settings(cls):
@@ -19,11 +19,11 @@ class Service:
 
     @classmethod
     def update_dsc(cls):
-        cls.dscs = cls._fetch_dsc()
+        cls._dsc_collection = cls._fetch_dsc()
 
     @classmethod
     def get_dsc(cls, kid):
-        return cls.dscs.get(kid)
+        return cls._dsc_collection.get(kid)
 
     @classmethod
     def is_blacklisted(cls, uvci):
