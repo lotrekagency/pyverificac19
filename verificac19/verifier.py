@@ -1,5 +1,7 @@
 from dcc_utils import from_image, from_raw
 from dcc_utils.exceptions import DCCParsingError
+from .service import service
+from datetime import datetime, timedelta
 
 SUPER_GP_MODE = "2G"
 
@@ -14,12 +16,60 @@ class Verifier():
     def _check_vaccination(cls, payload): 
         print('Vaccino')
         print(payload)
-        if payload['v'][-1]["mp"] == "Sputnik-V" and payload['v'][-1]["co"] != "SM":
+        last = payload['v'][-1]
+        if last["mp"] == "Sputnik-V" and last["co"] != "SM":
             return {
                 "code": NOT_VALID,
                 "result": False,
                 "message" : 'Vaccine Sputnik-V is valid only in San Marino',
             }
+        service.update_settings()
+
+        current_dose = int(last['dn'])
+        necessary_dose = int(last['sd'])
+
+        vaccine_date = datetime.strptime(last['dt'], "%Y-%m-%d")
+        now = datetime.now()
+
+        if current_dose < necessary_dose:
+            vaccine_start_day_not_complete = int(service.get_setting('vaccine_start_day_not_complete', last['mp'])['value'])
+            vaccine_end_day_not_complete = int(service.get_setting('vaccine_end_day_not_complete', last['mp'])['value'])
+            check_start_day_not_complete = vaccine_date + timedelta(days=vaccine_start_day_not_complete)
+            check_end_day_not_complete = vaccine_date + timedelta(days=vaccine_end_day_not_complete)
+            if now < check_start_day_not_complete:
+                return {
+                    "code": NOT_VALID_YET,
+                    "result": True,
+                    "message" : 'Certificate is not valid yet',
+                }
+            if now > check_end_day_not_complete:
+                return {
+                    "code": NOT_VALID,
+                    "result": True,
+                    "message" : 'Certificate is not valid',
+                }
+        else:
+            vaccine_start_day_complete = int(service.get_setting('vaccine_start_day_complete', last['mp'])['value'])
+            vaccine_end_day_complete = int(service.get_setting('vaccine_end_day_complete', last['mp'])['value'])
+            check_start_day_complete = vaccine_date + timedelta(days=vaccine_start_day_complete)
+            check_end_day_complete = vaccine_date + timedelta(days=vaccine_end_day_complete)
+            if now < check_start_day_complete:
+                return {
+                    "code": NOT_VALID_YET,
+                    "result": True,
+                    "message" : 'Certificate is not valid yet',
+                }
+            if now > check_end_day_complete:
+                return {
+                    "code": NOT_VALID,
+                    "result": True,
+                    "message" : 'Certificate is not valid',
+                }
+        return {
+            "code": VALID,
+            "result": True,
+            "message" : 'Certificate is valid',
+        }
 
     @classmethod
     def _check_test(cls, payload): 
