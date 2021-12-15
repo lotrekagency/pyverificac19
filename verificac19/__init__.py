@@ -1,5 +1,5 @@
 from .exceptions import VerificaC19Error
-
+from .service import service
 
 def sum(a: int, b: int) -> int:
     if a < 0 or b < 0:
