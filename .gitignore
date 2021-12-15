@@ -4,3 +4,5 @@ venv/
 *.pyc
 .coverage
 .DS_Store
+
+.python-version
