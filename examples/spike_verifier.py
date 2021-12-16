@@ -1,7 +1,5 @@
-from verificac19.verifier import Verifier
 from dcc_utils import from_image
-from verificac19 import service
-verifier = Verifier()
+from verificac19 import service, verifier
 
 
 file_test = {

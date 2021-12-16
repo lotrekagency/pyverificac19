@@ -4,6 +4,9 @@ import json
 from typing import Any
 import pathlib
 
+from .exceptions import VerificaC19Error
+
+
 CACHE_DATA_DIRECTORY = str(pathlib.Path(__file__).parent.resolve()) + '/cache_data/'
 if not os.path.exists(CACHE_DATA_DIRECTORY):
     os.mkdir(CACHE_DATA_DIRECTORY)

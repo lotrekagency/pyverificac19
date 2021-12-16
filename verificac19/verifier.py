@@ -3,6 +3,9 @@ from dcc_utils.exceptions import DCCParsingError
 from .service import service
 from datetime import datetime, timedelta
 
+from .exceptions import VerificaC19Error
+
+
 SUPER_GP_MODE = "2G"
 
 GENERIC_TYPE = "GENERIC"
@@ -197,3 +200,5 @@ class Verifier():
     def verify_raw(cls, raw,super_gp_mode=SUPER_GP_MODE):
         mydcc = from_raw(raw)
         return mydcc
+
+verifier = Verifier()
