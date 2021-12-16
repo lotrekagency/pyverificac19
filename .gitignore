@@ -6,4 +6,4 @@ venv/
 .DS_Store
 
 .python-version
-verificac19/cache_data/
+verificac19/service/cache_data/
