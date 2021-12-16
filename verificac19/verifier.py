@@ -3,6 +3,7 @@ from dcc_utils.exceptions import DCCParsingError
 from .service import service
 from datetime import datetime, timedelta
 
+
 SUPER_GP_MODE = "2G"
 
 GENERIC_TYPE = "GENERIC"
@@ -161,7 +162,6 @@ class Verifier:
         )
 
         start_date = datetime.strptime(last["df"], "%Y-%m-%d")
-        end_date = datetime.strptime(last["du"], "%Y-%m-%d")
         start_date_validation = start_date + timedelta(days=recovery_start_day)
         now = datetime.now()
 
@@ -182,6 +182,13 @@ class Verifier:
             "result": True,
             "message": "Recovery statement is expired",
         }
+
+    @classmethod
+    def _check_certificate(cls, dcc):
+        signature = (
+            "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----"
+        ).format(service.get_dsc(dcc.kid))
+        return dcc.check_signature(signature.encode("utf-8"))
 
     @classmethod
     def _verify(cls, dcc, super_gp_mode):
@@ -219,3 +226,6 @@ class Verifier:
     def verify_raw(cls, raw, super_gp_mode=SUPER_GP_MODE):
         mydcc = from_raw(raw)
         return mydcc
+
+
+verifier = Verifier()

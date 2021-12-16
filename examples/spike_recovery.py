@@ -1,11 +1,6 @@
-from verificac19.verifier import Verifier
-from verificac19.service import Service
-
-
+from verificac19 import service, verifier
 from dcc_utils import from_image
 
-verifier = Verifier()
-service = Service()
 
 service.update_all()
 

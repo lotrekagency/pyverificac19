@@ -1,7 +1,5 @@
-from verificac19.verifier import Verifier
 from dcc_utils import from_image
-
-verifier = Verifier()
+from verificac19 import service, verifier
 
 
 file_test = {
@@ -13,7 +11,7 @@ file_test = {
 }
 # print(verifier.verify_image(file_test['vaccine']))
 
-
+service.update_all()
 dcc_not_sm = from_image(file_test["vaccine"])
 
 # verify first dose with vacine date 2021-11-01, NOT_VALID
@@ -54,3 +52,7 @@ print(verifier._check_test(dcc_not_sm.payload))
 
 dcc_not_sm = from_image("tests/data/eu_test_certificates/TEST.png")  # NOT VALID
 print(verifier._check_test(dcc_not_sm.payload))
+
+dcc_not_sm = from_image("tests/data/mouse.jpeg")  # NOT VALID
+print(verifier._check_vaccination(dcc_not_sm.payload))
+print(verifier._check_certificate(dcc_not_sm))
