@@ -1,5 +1,5 @@
 import requests
-from typing import Any, Union, Callable
+from typing import Union
 
 from ._cache import dump_to_cache, fetch_with_smart_cache
 
@@ -8,11 +8,11 @@ Dsc = dict[str, str]
 
 class Service:
 
-    DSC_URL = 'https://get.dgc.gov.it/v1/dgc/signercertificate/update'
-    SETTINGS_URL = 'https://get.dgc.gov.it/v1/dgc/settings'
+    DSC_URL = "https://get.dgc.gov.it/v1/dgc/signercertificate/update"
+    SETTINGS_URL = "https://get.dgc.gov.it/v1/dgc/settings"
 
-    DSC_FILE_CACHE_PATH = 'dsc.json'
-    SETTINGS_FILE_CACHE_PATH = 'settings.json'
+    DSC_FILE_CACHE_PATH = "dsc.json"
+    SETTINGS_FILE_CACHE_PATH = "settings.json"
 
     _settings = []
     _dsc_collection = {}
@@ -25,21 +25,25 @@ class Service:
         Otherwise it retrieves them from the api.
         """
 
-        cls._dsc_collection: Dsc = fetch_with_smart_cache(cls.DSC_FILE_CACHE_PATH, cls._fetch_dsc)
-        cls._settings: list = fetch_with_smart_cache(cls.SETTINGS_FILE_CACHE_PATH, cls._fetch_settings)
+        cls._dsc_collection: Dsc = fetch_with_smart_cache(
+            cls.DSC_FILE_CACHE_PATH, cls._fetch_dsc
+        )
+        cls._settings: list = fetch_with_smart_cache(
+            cls.SETTINGS_FILE_CACHE_PATH, cls._fetch_settings
+        )
 
     @classmethod
     def _update_from_apis(cls) -> None:
         cls._settings = cls._fetch_settings()
 
     @classmethod
-    def update_settings(cls):
+    def update_settings(cls) -> None:
         """Force update settings from apis."""
 
         cls._settings = cls._fetch_settings()
 
     @classmethod
-    def update_dsc(cls):
+    def update_dsc(cls) -> None:
         """Force update dsc from apis."""
 
         cls._dsc_collection = cls._fetch_dsc()
@@ -65,10 +69,10 @@ class Service:
             whether is blacked list or not
         """
 
-        blacklist = cls.get_setting('black_list_uvci', 'black_list_uvci')
-        blacklisted_ucvi = blacklist.get('value').split(';')
+        blacklist = cls.get_setting("black_list_uvci", "black_list_uvci")
+        blacklisted_ucvi = blacklist.get("value").split(";")
         return uvci in blacklisted_ucvi
-        
+
     @classmethod
     def get_setting(cls, setting_name: str, setting_type: str) -> dict:
         """Get the setting.
@@ -77,25 +81,32 @@ class Service:
         """
 
         try:
-            setting_data: dict = next(iter([ setting for setting in cls._settings if setting['name'] == setting_name and setting['type'] == setting_type]))
+            setting_data: dict = next(
+                iter(
+                    [
+                        setting
+                        for setting in cls._settings
+                        if setting["name"] == setting_name
+                        and setting["type"] == setting_type
+                    ]
+                )
+            )
             return setting_data
         except StopIteration:
             return {}
 
     @classmethod
-    def _fetch_dsc(cls, token: str=None, dsc_collection: dict={}) -> dict:
-        headers = {
-            'X-RESUME-TOKEN': token
-        }
+    def _fetch_dsc(cls, token: str = None, dsc_collection: dict = {}) -> dict:
+        headers = {"X-RESUME-TOKEN": token}
         response = requests.get(cls.DSC_URL, headers=headers)
 
         if not response.status_code == 200:
             dump_to_cache(cls.DSC_FILE_CACHE_PATH, dsc_collection)
             return dsc_collection
 
-        x_kid = response.headers.get('X-KID')
+        x_kid = response.headers.get("X-KID")
         dsc_collection[x_kid] = response.text
-        x_resume_token = response.headers.get('X-RESUME-TOKEN')
+        x_resume_token = response.headers.get("X-RESUME-TOKEN")
         return cls._fetch_dsc(x_resume_token, dsc_collection)
 
     @classmethod
@@ -109,8 +120,4 @@ class Service:
         return settings_data
 
 
-
-
-
 service = Service
-

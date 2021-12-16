@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 VALID_CACHE_PERIOD = timedelta(days=1)
 
-CACHE_DATA_DIRECTORY = str(pathlib.Path(__file__).parent.resolve()) + '/cache_data/'
+CACHE_DATA_DIRECTORY = str(pathlib.Path(__file__).parent.resolve()) + "/cache_data/"
 if not os.path.exists(CACHE_DATA_DIRECTORY):
     os.mkdir(CACHE_DATA_DIRECTORY)
 
@@ -22,11 +22,8 @@ def dump_to_cache(file_name: str, data: Any) -> None:
     file_path = CACHE_DATA_DIRECTORY + file_name
 
     currect_time = datetime.now().isoformat()
-    data_with_date = {
-        'data': data,
-        'time': currect_time
-    }
-    with open(file_path, 'w') as output:
+    data_with_date = {"data": data, "time": currect_time}
+    with open(file_path, "w") as output:
         json.dump(data_with_date, output, indent=2)
 
 
@@ -52,12 +49,12 @@ def fetch_with_smart_cache(file_name: str, fetch_from_source: Callable) -> Any:
 
 
 def _load_cached_file(file_path: str) -> Tuple[dict, datetime]:
-    with open(file_path, 'r') as input:
+    with open(file_path, "r") as input:
         data_with_date = json.load(input)
 
-    data = data_with_date['data']
+    data = data_with_date["data"]
 
-    data_creation_isotime: str = data_with_date['time']
+    data_creation_isotime: str = data_with_date["time"]
     data_creation_datetime = datetime.fromisoformat(data_creation_isotime)
     return data, data_creation_datetime
 
