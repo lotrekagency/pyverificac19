@@ -1,7 +1,5 @@
 # VerificaC19 Python SDK
 
-Official VerificaC19 SDK implementation for Node.js ([official SDKs list](https://github.com/ministero-salute/it-dgc-verificac19-sdk-onboarding#lista-librerie)).
-
 ### Example excecution
 
 ```sh
@@ -132,4 +130,4 @@ Here is a list of contributors. Thank you to everyone involved for improving thi
 </a>
 
 ## License
-VerificaC19-SDK for Node.js is available under the [MIT](https://opensource.org/licenses/mit-license.php) license.
+This library is available under the [MIT](https://opensource.org/licenses/mit-license.php) license.
