@@ -2,9 +2,12 @@ samples/
 certs/
 venv/ 
 *.pyc
-.coverage
 .DS_Store
 
 .python-version
 verificac19/cache_data/
 /cache_data
+
+# Test
+.coverage
+coverage.xml
