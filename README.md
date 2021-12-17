@@ -1,42 +1,40 @@
 # VerificaC19 Python SDK
 
-### Example excecution
+## Install
 
 ```sh
-python -m examples.try_sum
+pip install verificac19
 ```
+
+Make sure `zbar` is installed in your system
+  * For Mac OS X, it can be installed via `brew install zbar`
+  * Debian systems via `apt install libzbar0`. [Source](https://pypi.org/project/pyzbar/)
+  * Fedora / Red Hat `dnf install zbar`
+
 ## Usage
 
 ### Download and cache rules and DSCs
 
-You can download and cache rules and DSCs using `Service` module.
+You can download and cache rules and DSCs using `service`.
 
 ```python
+from verificac19 import service
 
+service.update_all()
 ```
 
-⚠️ By default rules and DSCs will be cached in a folder called `.cache`, 
+⚠️ By default rules and DSCs will be cached in local folder, 
 to change it please set `VC19_CACHE_FOLDER` env variable.
-
-👉🏻  See an example [examples/syncdata.js](https://github.com/italia/verificac19-sdk/blob/master/examples/syncdata.js).
 
 ### Verify a DCC
 
-You can load a DCC from an image or from a raw string using `Certificate` module.
+You can verify a DCC using `verifier`.
 
 ```python
-```
+from verificac19 import verifier
 
-Loaded DCC has the following structure:
-
-```python
-
-```
-
-You can verify a DCC using `Validator` module.
-
-```python
-
+my_dcc_1 = verifier.verify_image("my_dcc.png")
+my_dcc_2 = verifier.verify_raw("HC1:GH.....1GH")
 ```
 
 `Validator.validate` returns an object containing `person` name, 
@@ -61,9 +59,6 @@ for example
 
 ```
 
-👉🏻  See an example [examples/verifydccs.js](https://github.com/italia/verificac19-sdk/blob/master/examples/verifydccs.js).
-
-
 ### Verification mode
 
 If you want to change verification mode and verify whether a certificate is a 
@@ -83,20 +78,6 @@ will be a certificate valid only for people who have been vaccinated against
 or who have recovered from Covid19, and will prevent all the others from 
 entering bars, restaurants, cinemas, gyms, theatres, discos and stadiums.***
 
-### Alternative methods
-
-To update rules and DSCs you can also use `updateRules`, 
-`updateSignaturesList` and `updateSignatures` methods
-
-```python
-```
-
-To verify a DCC you can also use `Validator.checkRules` and 
-`Validator.checkSignature` methods.
-
-```python
-
-```
 ## Development
 
 Install dev dependencies
@@ -115,10 +96,15 @@ Make sure `zbar` is installed in your system
 ```
 make test
 ``` 
+
+### Run examples
+
+```sh
+python -m examples.<example_name>
+```
+
 ## Authors
 Copyright (c) 2021 - [Lotrèk Digital Agency](https://lotrek.it/)
-
-
 
 ## Contributors
 Here is a list of contributors. Thank you to everyone involved for improving this project, day by day.
