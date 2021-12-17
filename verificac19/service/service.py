@@ -1,20 +1,24 @@
 import requests
-from typing import Union
+from typing import Union, Dict
 
 from ._cache import dump_to_cache, fetch_with_smart_cache
 
-Dsc = dict[str, str]
+Dsc = Dict[str, str]
 
 
 class Service:
 
-    DSC_URL = "https://get.dgc.gov.it/v1/dgc/signercertificate/update"
-    SETTINGS_URL = "https://get.dgc.gov.it/v1/dgc/settings"
+    API_URL = "https://get.dgc.gov.it/v1/dgc"
+
+    DSC_URL = f"{API_URL}/signercertificate/update"
+    STATUS_URL = f"{API_URL}/signercertificate/status"
+    SETTINGS_URL = f"{API_URL}/settings"
 
     DSC_FILE_CACHE_PATH = "dsc.json"
     SETTINGS_FILE_CACHE_PATH = "settings.json"
 
     _settings = []
+    _allowed_kids = []
     _dsc_collection = {}
 
     @classmethod
@@ -96,7 +100,16 @@ class Service:
             return {}
 
     @classmethod
+    def _fetch_status(cls) -> dict:
+        response = requests.get(cls.STATUS_URL)
+        if response.status_code == 200:
+            return response.json()
+        return []
+
+    @classmethod
     def _fetch_dsc(cls, token: str = None, dsc_collection: dict = {}) -> dict:
+        if not token:
+            cls._allowed_kids = cls._fetch_status()
         headers = {"X-RESUME-TOKEN": token}
         response = requests.get(cls.DSC_URL, headers=headers)
 
@@ -105,7 +118,8 @@ class Service:
             return dsc_collection
 
         x_kid = response.headers.get("X-KID")
-        dsc_collection[x_kid] = response.text
+        if x_kid in cls._allowed_kids:
+            dsc_collection[x_kid] = response.text
         x_resume_token = response.headers.get("X-RESUME-TOKEN")
         return cls._fetch_dsc(x_resume_token, dsc_collection)
 
