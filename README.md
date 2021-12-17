@@ -28,23 +28,30 @@ to change it please set `VC19_CACHE_FOLDER` env variable.
 
 ### Verify a DCC
 
-You can verify a DCC using `verifier`.
+You can verify a DCC using `verifier`. You can verify a DCC using 
+`verify_image` for images and `verify_raw` for raw data.
 
 ```python
 from verificac19 import verifier
 
-my_dcc_1 = verifier.verify_image("my_dcc.png")
-my_dcc_2 = verifier.verify_raw("HC1:GH.....1GH")
+result = verifier.verify_image("my_dcc.png")
+result = verifier.verify_raw("HC1:GH.....1GH")
 ```
 
-`Validator.validate` returns an object containing `person` name, 
+`verify_image` and `verify_raw` return a dictionary containing `person` name, 
 `date_of_birth`, `code` and a `message` alongside the `result`
 
 ```python
-
+{
+  'code': 'NOT_VALID', 
+  'result': False, 
+  'message': 'Certificate is not valid', 
+  'person': 'Sčasný Svätozár', 
+  'date_of_birth': '1984-09-27'
+}
 ```
 
-you can compare the resulting `code` with `Validator.codes` values
+you can compare the resulting `code` with `verifier.Codes` values
 
 | | Code            | Description                              |
 |-| --------------- | ---------------------------------------- |
@@ -56,16 +63,18 @@ you can compare the resulting `code` with `Validator.codes` values
 for example 
 
 ```python
-
+result = verifier.verify_image("my_dcc.png")
+assert result['code'] == verifier.Codes.NOT_VALID
 ```
 
 ### Verification mode
 
 If you want to change verification mode and verify whether a certificate is a 
-Super Green Pass or not, you need to pass `Validator.mode.SUPER_DGP` to 
-`Validator.validate` method.
+Super Green Pass or not, you need to pass `verifier.Mode.SUPER_DGP` to 
+`verify_image` and `verify_raw` methods.
 
 ```python
+
 ```
 
 | Code           | Description                              |

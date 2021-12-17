@@ -6,9 +6,11 @@ from datetime import datetime, timedelta
 
 VALID_CACHE_PERIOD = timedelta(days=1)
 
-CACHE_DATA_DIRECTORY = str(pathlib.Path(__file__).parent.resolve()) + "/cache_data/"
+CACHE_DATA_DIRECTORY = os.environ.get(
+    "VC19_CACHE_FOLDER", str(pathlib.Path(__file__).parent.resolve()) + "/cache_data/"
+)
 if not os.path.exists(CACHE_DATA_DIRECTORY):
-    os.mkdir(CACHE_DATA_DIRECTORY)
+    os.makedirs(CACHE_DATA_DIRECTORY, 0o777, True)
 
 
 def dump_to_cache(file_name: str, data: Any) -> None:
@@ -27,7 +29,9 @@ def dump_to_cache(file_name: str, data: Any) -> None:
         json.dump(data_with_date, output, indent=2)
 
 
-def fetch_with_smart_cache(file_name: str, fetch_from_source: Callable) -> Any:
+def fetch_with_smart_cache(
+    file_name: str, fetch_from_source: Callable, only_cache=False
+) -> Any:
     """Uses cache if possible otherwiser returns callback.
 
     If the file exists and the date registered is not older than the maximum
@@ -44,6 +48,10 @@ def fetch_with_smart_cache(file_name: str, fetch_from_source: Callable) -> Any:
 
     if _is_date_valid(creation_date):
         return data
+
+    if only_cache:
+        print("update all please")
+        return None
 
     return fetch_from_source()
 
