@@ -2,6 +2,7 @@ import requests
 from typing import Union, Dict
 
 from ._cache import dump_to_cache, fetch_with_smart_cache
+from ..exceptions import VerificaC19Error
 
 Dsc = Dict[str, str]
 
@@ -18,9 +19,7 @@ SETTINGS_FILE_CACHE_PATH = "settings.json"
 
 class Service:
     def __init__(self):
-        self._settings = []
         self._allowed_kids = []
-        self._dsc_collection = {}
         self._dsc_collection: Dsc = (
             fetch_with_smart_cache(DSC_FILE_CACHE_PATH, self._fetch_dsc, True) or {}
         )
@@ -35,7 +34,6 @@ class Service:
         Restores dsc and settings data from cache if possible.
         Otherwise it retrieves them from the api.
         """
-
         self._dsc_collection: Dsc = fetch_with_smart_cache(
             DSC_FILE_CACHE_PATH, self._fetch_dsc
         )
@@ -53,12 +51,10 @@ class Service:
 
     def update_dsc(self) -> None:
         """Force update dsc from apis."""
-
         self._dsc_collection = self._fetch_dsc()
 
     def get_dsc(self, kid) -> Union[str, None]:
         """Retrieves dsc from kid."""
-
         return self._dsc_collection.get(kid)
 
     def is_blacklisted(self, uvci: str) -> bool:
@@ -74,7 +70,6 @@ class Service:
         bool
             whether is blacked list or not
         """
-
         blacklist = self.get_setting("black_list_uvci", "black_list_uvci")
         blacklisted_ucvi = blacklist.get("value").split(";")
         return uvci in blacklisted_ucvi
@@ -84,7 +79,6 @@ class Service:
 
         Returns an empty dict if the option is not found.
         """
-
         try:
             setting_data: dict = next(
                 iter(
@@ -101,10 +95,10 @@ class Service:
             return {}
 
     def _fetch_status(self) -> dict:
-        response = requests.get(self.STATUS_URL)
+        response = requests.get(STATUS_URL)
         if response.status_code == 200:
             return response.json()
-        return []
+        raise VerificaC19Error("Error fetching status")
 
     def _fetch_dsc(self, token: str = None, dsc_collection: dict = {}) -> dict:
         if not token:
@@ -112,9 +106,13 @@ class Service:
         headers = {"X-RESUME-TOKEN": token}
         response = requests.get(DSC_URL, headers=headers)
 
-        if not response.status_code == 200:
+        if response.status_code == 200:
+            pass
+        elif response.status_code == 204:
             dump_to_cache(DSC_FILE_CACHE_PATH, dsc_collection)
             return dsc_collection
+        else:
+            raise VerificaC19Error("Error fetching DSC")
 
         x_kid = response.headers.get("X-KID")
         if x_kid in self._allowed_kids:
@@ -125,8 +123,7 @@ class Service:
     def _fetch_settings(self) -> list:
         response = requests.get(SETTINGS_URL)
         if not response.status_code == 200:
-            return []
-
+            raise VerificaC19Error("Error fetching settings")
         settings_data = response.json()
         dump_to_cache(SETTINGS_FILE_CACHE_PATH, settings_data)
         return settings_data

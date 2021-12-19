@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 VALID_CACHE_PERIOD = timedelta(days=1)
 
 CACHE_DATA_DIRECTORY = os.environ.get(
-    "VC19_CACHE_FOLDER", str(pathlib.Path(__file__).parent.resolve()) + "/cache_data/"
+    "VC19_CACHE_FOLDER",
+    os.path.join(str(pathlib.Path(__file__).parent.resolve()), "cache_data"),
 )
 if not os.path.exists(CACHE_DATA_DIRECTORY):
     os.makedirs(CACHE_DATA_DIRECTORY, 0o777, True)
@@ -21,7 +22,7 @@ def dump_to_cache(file_name: str, data: Any) -> None:
     be refetched.
     """
 
-    file_path = CACHE_DATA_DIRECTORY + file_name
+    file_path = os.path.join(CACHE_DATA_DIRECTORY, file_name)
 
     currect_time = datetime.now().isoformat()
     data_with_date = {"data": data, "time": currect_time}
@@ -38,8 +39,7 @@ def fetch_with_smart_cache(
     valid cache period, the data is loaded from the  cached file.
     Otherwise, the result of the `fetch_from_source` callable will be returned.
     """
-
-    file_path = CACHE_DATA_DIRECTORY + file_name
+    file_path = os.path.join(CACHE_DATA_DIRECTORY, file_name)
 
     if not os.path.exists(file_path):
         return fetch_from_source()
@@ -50,7 +50,6 @@ def fetch_with_smart_cache(
         return data
 
     if only_cache:
-        print("update all please")
         return None
 
     return fetch_from_source()

@@ -56,12 +56,18 @@ class Verifier:
         NORMAL_DGP = "3G"
 
     def _check_vaccination(self, payload):
+        if len(payload["v"]) == 0:
+            return Result(
+                self.Codes.NOT_EU_DCC,
+                False,
+                "No vaccination, test or recovery statement found in payload",
+            )
         last = payload["v"][-1]
         if service.is_blacklisted(last["ci"]):
             return Result(
                 self.Codes.NOT_VALID,
                 False,
-                "No vaccination, test or recovery statement found in payload or UVCI is in blacklist",
+                "UVCI is in blacklist",
             )
 
         if last["mp"] == "Sputnik-V" and last["co"] != "SM":
@@ -71,8 +77,20 @@ class Verifier:
                 "Vaccine Sputnik-V is valid only in San Marino",
             )
 
-        current_dose = int(last["dn"])
-        necessary_dose = int(last["sd"])
+        not_valid_doses = Result(
+            self.Codes.NOT_VALID,
+            False,
+            "Current or necessary dose are not valid",
+        )
+
+        try:
+            current_dose = int(last["dn"])
+            necessary_dose = int(last["sd"])
+        except ValueError:
+            return not_valid_doses
+
+        if current_dose < 0 or necessary_dose < 0:
+            return not_valid_doses
 
         vaccine_date = datetime.strptime(last["dt"], "%Y-%m-%d")
         now = datetime.now()
@@ -136,6 +154,12 @@ class Verifier:
         )
 
     def _check_test(self, payload):
+        if len(payload["t"]) == 0:
+            return Result(
+                self.Codes.NOT_EU_DCC,
+                False,
+                "No vaccination, test or recovery statement found in payload",
+            )
         test = payload["t"][-1]
         if test["tr"] == TEST_DETECTED:
             return Result(
@@ -179,6 +203,12 @@ class Verifier:
         )
 
     def _check_recovery(self, payload):
+        if len(payload["r"]) == 0:
+            return Result(
+                self.Codes.NOT_EU_DCC,
+                False,
+                "No vaccination, test or recovery statement found in payload",
+            )
         last = payload["r"][-1]
         recovery_start_day = int(
             service.get_setting("recovery_cert_start_day", "GENERIC")["value"]
@@ -209,13 +239,16 @@ class Verifier:
             "Recovery statement is expired",
         )
 
-    def _check_certificate(self, dcc):
+    def _verify_dsc(self, dcc):
         signature = (
             "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----"
         ).format(service.get_dsc(dcc.kid))
-        return dcc.check_signature(signature.encode("utf-8"))
+        try:
+            return dcc.check_signature(signature.encode("utf-8"))
+        except ValueError:
+            return False
 
-    def _verify(self, dcc, super_gp_mode):
+    def _verify_rules(self, dcc, super_gp_mode):
         payload = dcc.payload
         if "v" in payload:
             result = self._check_vaccination(payload)
@@ -240,33 +273,31 @@ class Verifier:
             f"{payload['nam']['fn']} {payload['nam']['gn']}", payload["dob"]
         ).payload
 
-    def verify_image(self, path, super_gp_mode=None):
+    def _verify(self, f, path_or_raw, super_gp_mode=None):
         if super_gp_mode is None:
             super_gp_mode = self.Mode.NORMAL_DGP
         try:
-            mydcc = from_image(path)
-            response = self._verify(mydcc, super_gp_mode)
+            dcc = f(path_or_raw)
+            if not self._verify_dsc(dcc):
+                return Result(
+                    self.Codes.NOT_VALID,
+                    False,
+                    "Signature is not valid",
+                ).payload
+            response = self._verify_rules(dcc, super_gp_mode)
             return response
         except DCCParsingError:
             return Result(
-                self.Codes.NOT_VALID,
+                self.Codes.NOT_EU_DCC,
                 False,
                 "Certificate is not valid",
             ).payload
 
+    def verify_image(self, path, super_gp_mode=None):
+        return self._verify(from_image, path, super_gp_mode)
+
     def verify_raw(self, raw, super_gp_mode=None):
-        if super_gp_mode is None:
-            super_gp_mode = self.Mode.NORMAL_DGP
-        try:
-            mydcc = from_raw(raw)
-            response = self._verify(mydcc, super_gp_mode)
-            return response
-        except DCCParsingError:
-            return Result(
-                self.Codes.NOT_VALID,
-                False,
-                "Certificate is not valid",
-            ).payload
+        return self._verify(from_raw, raw, super_gp_mode)
 
 
 _verifier = Verifier()
