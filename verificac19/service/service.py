@@ -1,5 +1,6 @@
 import requests
 from typing import Union, Dict
+from datetime import datetime, timedelta
 
 from ._cache import dump_to_cache, fetch_with_smart_cache
 from ..exceptions import VerificaC19Error
@@ -20,13 +21,7 @@ SETTINGS_FILE_CACHE_PATH = "settings.json"
 class Service:
     def __init__(self):
         self._allowed_kids = []
-        self._dsc_collection: Dsc = (
-            fetch_with_smart_cache(DSC_FILE_CACHE_PATH, self._fetch_dsc, True) or {}
-        )
-        self._settings: list = (
-            fetch_with_smart_cache(SETTINGS_FILE_CACHE_PATH, self._fetch_settings, True)
-            or []
-        )
+        self._load_from_cache()
 
     def update_all(self) -> None:
         """Updates dsc and settings data.
@@ -40,9 +35,6 @@ class Service:
         self._settings: list = fetch_with_smart_cache(
             SETTINGS_FILE_CACHE_PATH, self._fetch_settings
         )
-
-    def _update_from_apis(self) -> None:
-        self._settings = self._fetch_settings()
 
     def update_settings(self) -> None:
         """Force update settings from apis."""
@@ -78,6 +70,8 @@ class Service:
 
         Returns an empty dict if the option is not found.
         """
+        if datetime.now() > self._next_load_from_cache:
+            self._load_from_cache()
         try:
             setting_data: dict = next(
                 iter(
@@ -92,6 +86,19 @@ class Service:
             return setting_data
         except StopIteration:
             return {}
+
+    def _load_from_cache(self) -> None:
+        self._dsc_collection: Dsc = (
+            fetch_with_smart_cache(DSC_FILE_CACHE_PATH, self._fetch_dsc, True) or {}
+        )
+        self._settings: list = (
+            fetch_with_smart_cache(SETTINGS_FILE_CACHE_PATH, self._fetch_settings, True)
+            or []
+        )
+        self._next_load_from_cache = datetime.now() + timedelta(hours=1)
+
+    def _update_from_apis(self) -> None:
+        self._settings = self._fetch_settings()
 
     def _fetch_status(self) -> dict:
         response = requests.get(STATUS_URL)

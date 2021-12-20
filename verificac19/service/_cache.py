@@ -31,7 +31,7 @@ def dump_to_cache(file_name: str, data: Any) -> None:
 
 
 def fetch_with_smart_cache(
-    file_name: str, fetch_from_source: Callable, only_cache=False
+    file_name: str, fetch_from_source: Callable, force_cache=False
 ) -> Any:
     """Uses cache if possible otherwiser returns callback.
 
@@ -46,11 +46,11 @@ def fetch_with_smart_cache(
 
     data, creation_date = _load_cached_file(file_path)
 
-    if _is_date_valid(creation_date):
+    if force_cache:
         return data
 
-    if only_cache:
-        return None
+    if _is_date_valid(creation_date):
+        return data
 
     return fetch_from_source()
 

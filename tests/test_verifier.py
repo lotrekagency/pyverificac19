@@ -133,7 +133,6 @@ def test_certificates_rules():
     # Valid test results
     traveller = time_machine.travel(dt.datetime(2021, 5, 22))
     traveller.start()
-    # mockdate.set('2021-05-22T12:34:56.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_7.png"),
         True,
@@ -158,7 +157,6 @@ def test_certificates_rules():
     # Doses 1/2 valid only in Italy
     traveller = time_machine.travel(dt.datetime(2021, 6, 24))
     traveller.start()
-    # mockdate.set('2021-06-24T00:00:00.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_1.png"),
         True,
@@ -169,7 +167,6 @@ def test_certificates_rules():
     # Test result not valid yet
     traveller = time_machine.travel(dt.datetime(2021, 4, 22))
     traveller.start()
-    # mockdate.set('2021-04-22T12:34:56.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_7.png"),
         False,
@@ -180,7 +177,6 @@ def test_certificates_rules():
     # Doses 1/2 not valid yet
     traveller = time_machine.travel(dt.datetime(2021, 5, 24))
     traveller.start()
-    # mockdate.set('2021-05-24T00:00:00.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_1.png"),
         False,
@@ -191,7 +187,6 @@ def test_certificates_rules():
     # Doses 2/2 not valid yet
     traveller = time_machine.travel(dt.datetime(2021, 5, 18))
     traveller.start()
-    # mockdate.set('2021-05-18T00:00:00.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_3.png"),
         False,
@@ -202,7 +197,6 @@ def test_certificates_rules():
     # Doses 2/2 expired
     traveller = time_machine.travel(dt.datetime(2022, 6, 17))
     traveller.start()
-    # mockdate.set('2022-06-17T00:00:00.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_4.png"),
         False,
@@ -213,7 +207,6 @@ def test_certificates_rules():
     # Recovery statement is valid
     traveller = time_machine.travel(dt.datetime(2021, 10, 20))
     traveller.start()
-    # mockdate.set('2021-10-20T00:00:00.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
         True,
@@ -224,7 +217,6 @@ def test_certificates_rules():
     # Recovery statement is not valid yet
     traveller = time_machine.travel(dt.datetime(2021, 4, 22))
     traveller.start()
-    # mockdate.set('2021-04-22T12:34:56.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
         False,
@@ -235,7 +227,6 @@ def test_certificates_rules():
     # Recovery statement is not valid
     traveller = time_machine.travel(dt.datetime(2022, 4, 22))
     traveller.start()
-    # mockdate.set('2022-04-22T12:34:56.000Z')
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
         False,
