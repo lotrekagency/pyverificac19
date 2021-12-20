@@ -1,4 +1,5 @@
 import os
+import re
 import time_machine
 import datetime as dt
 
@@ -16,6 +17,8 @@ def verify_rules_from_certificate(
     result = verifier._verify_rules(dcc, mode)
     assert result["result"] == expected_result
     assert result["code"] == expected_code
+    if expected_msg_reg:
+        assert not re.search(expected_msg_reg, result["message"]) is None
 
 
 def verify_rules_from_image(
@@ -112,7 +115,7 @@ def test_certificates_rules():
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
         False,
         verifier.Codes.NOT_VALID,
-        "^Recovery statement is expired .*$",
+        "^Recovery statement is expired",
     )
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_7.png"),
@@ -215,7 +218,7 @@ def test_certificates_rules():
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
         True,
         verifier.Codes.VALID,
-        "^Recovery statement is valid .*$",
+        "^Recovery statement is valid$",
     )
     traveller.stop()
     # Recovery statement is not valid yet
@@ -226,7 +229,7 @@ def test_certificates_rules():
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
         False,
         verifier.Codes.NOT_VALID_YET,
-        "^Recovery statement is not valid yet, starts at .*$",
+        "^Recovery statement is not valid yet",
     )
     traveller.stop()
     # Recovery statement is not valid
@@ -237,7 +240,7 @@ def test_certificates_rules():
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
         False,
         verifier.Codes.NOT_VALID,
-        "^Recovery statement is expired at .*$",
+        "^Recovery statement is expired",
     )
     traveller.stop()
     # Not valid greenpass without recovery

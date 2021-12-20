@@ -1,8 +1,12 @@
-from dcc_utils import from_image, from_raw
-from dcc_utils.exceptions import DCCParsingError
-from .service import _service as service
 from enum import Enum
+from collections.abc import Callable
 from datetime import datetime, timedelta
+
+from dcc_utils import from_image, from_raw
+from dcc_utils.dcc import DCC
+from dcc_utils.exceptions import DCCParsingError
+
+from .service import _service as service
 
 
 GENERIC_TYPE = "GENERIC"
@@ -55,7 +59,7 @@ class Verifier:
         SUPER_GP_MODE = "2G"
         NORMAL_DGP = "3G"
 
-    def _check_vaccination(self, payload):
+    def _check_vaccination(self, payload: dict):
         if len(payload["v"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
@@ -80,7 +84,7 @@ class Verifier:
         not_valid_doses = Result(
             self.Codes.NOT_VALID,
             False,
-            "Current or necessary dose are not valid",
+            "Current or necessary doses are not valid",
         )
 
         try:
@@ -91,6 +95,8 @@ class Verifier:
 
         if current_dose < 0 or necessary_dose < 0:
             return not_valid_doses
+
+        doses_str = f"Doses {current_dose}/{necessary_dose}"
 
         vaccine_date = datetime.strptime(last["dt"], "%Y-%m-%d")
         now = datetime.now()
@@ -114,14 +120,19 @@ class Verifier:
                 return Result(
                     self.Codes.NOT_VALID_YET,
                     False,
-                    "Certificate is not valid yet",
+                    f"{doses_str} - Vaccination is not valid yet, starts at : {check_start_day_not_complete.strftime('%Y-%m-%d')}",
                 )
             if now > check_end_day_not_complete:
                 return Result(
                     self.Codes.NOT_VALID,
                     False,
-                    "Certificate is not valid",
+                    f"{doses_str} - Vaccination is expired at : {check_end_day_not_complete.strftime('%Y-%m-%d')}",
                 )
+            return Result(
+                self.Codes.VALID,
+                True,
+                f"{doses_str} - Vaccination is valid - [{check_start_day_not_complete.strftime('%Y-%m-%d')} - {check_end_day_not_complete.strftime('%Y-%m-%d')}]",
+            )
         else:
             vaccine_start_day_complete = int(
                 service.get_setting("vaccine_start_day_complete", last["mp"])["value"]
@@ -139,21 +150,21 @@ class Verifier:
                 return Result(
                     self.Codes.NOT_VALID_YET,
                     False,
-                    "Certificate is not valid yet",
+                    f"{doses_str} - Vaccination is not valid yet, starts at: {check_start_day_complete.strftime('%Y-%m-%d')}",
                 )
             if now > check_end_day_complete:
                 return Result(
                     self.Codes.NOT_VALID,
                     False,
-                    "Certificate is not valid",
+                    f"{doses_str} - Vaccination is expired at : {check_end_day_complete.strftime('%Y-%m-%d')}",
                 )
-        return Result(
-            self.Codes.VALID,
-            True,
-            "Certificate is valid",
-        )
+            return Result(
+                self.Codes.VALID,
+                True,
+                f"{doses_str} - Vaccination is valid - [{check_start_day_complete.strftime('%Y-%m-%d')} - {check_end_day_complete.strftime('%Y-%m-%d')}]",
+            )
 
-    def _check_test(self, payload):
+    def _check_test(self, payload: dict):
         if len(payload["t"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
@@ -193,7 +204,7 @@ class Verifier:
             return Result(
                 self.Codes.NOT_VALID,
                 False,
-                f'Test Result is not valid, ended at : {end_datetime.strftime("%Y-%m-%d %H:%M:%S%z")}',
+                f'Test Result is expired at : {end_datetime.strftime("%Y-%m-%d %H:%M:%S%z")}',
             )
 
         return Result(
@@ -202,7 +213,7 @@ class Verifier:
             f'Test Result is valid [{start_datetime.strftime("%Y-%m-%d %H:%M:%S")} - {end_datetime.strftime("%Y-%m-%d %H:%M:%S")}]',
         )
 
-    def _check_recovery(self, payload):
+    def _check_recovery(self, payload: dict):
         if len(payload["r"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
@@ -236,10 +247,10 @@ class Verifier:
         return Result(
             self.Codes.VALID,
             True,
-            "Recovery statement is expired",
+            "Recovery statement is valid",
         )
 
-    def _verify_dsc(self, dcc):
+    def _verify_dsc(self, dcc: DCC):
         signature = (
             "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----"
         ).format(service.get_dsc(dcc.kid))
@@ -248,7 +259,7 @@ class Verifier:
         except ValueError:
             return False
 
-    def _verify_rules(self, dcc, super_gp_mode):
+    def _verify_rules(self, dcc: DCC, super_gp_mode: Mode):
         payload = dcc.payload
         if "v" in payload:
             result = self._check_vaccination(payload)
@@ -257,7 +268,7 @@ class Verifier:
                 result = Result(
                     self.Codes.NOT_VALID,
                     False,
-                    "Certificate is not valid",
+                    "Not valid. Super DGP required.",
                 )
             else:
                 result = self._check_test(payload)
@@ -273,7 +284,12 @@ class Verifier:
             f"{payload['nam']['fn']} {payload['nam']['gn']}", payload["dob"]
         ).payload
 
-    def _verify(self, f, path_or_raw, super_gp_mode=None):
+    def _verify(
+        self,
+        f: Callable[[str, DCCParsingError], DCC],
+        path_or_raw: str,
+        super_gp_mode: Mode = None,
+    ):
         if super_gp_mode is None:
             super_gp_mode = self.Mode.NORMAL_DGP
         try:
@@ -293,10 +309,10 @@ class Verifier:
                 "Certificate is not valid",
             ).payload
 
-    def verify_image(self, path, super_gp_mode=None):
+    def verify_image(self, path: str, super_gp_mode: Mode = None):
         return self._verify(from_image, path, super_gp_mode)
 
-    def verify_raw(self, raw, super_gp_mode=None):
+    def verify_raw(self, raw: str, super_gp_mode: Mode = None):
         return self._verify(from_raw, raw, super_gp_mode)
 
 
