@@ -10,3 +10,9 @@ verificac19/service/cache_data/
 # Test
 .coverage
 coverage.xml
+
+# Build
+/build
+/dist
+*.egg-info
+publish.sh
