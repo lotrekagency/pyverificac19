@@ -85,8 +85,8 @@ result = verifier.verify_image("my_dcc.png")
 assert result['code'] == verifier.Codes.NOT_VALID
 ```
 
-`verify_image` and `verify_raw` may rise `VerificaC19Error` in case you cache 
-is not initialized.
+⚠️ `verify_image` and `verify_raw` may rise `VerificaC19Error` in case you cache 
+is not initialized. You need to call `service.update_all()` at least once!
 
 ### Verification mode
 
