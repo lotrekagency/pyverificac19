@@ -46,6 +46,7 @@ class Service:
 
     def get_dsc(self, kid) -> Union[str, None]:
         """Retrieves dsc from kid."""
+        self._need_reload_from_cache()
         return self._dsc_collection.get(kid)
 
     def is_blacklisted(self, uvci: str) -> bool:
@@ -61,6 +62,7 @@ class Service:
         bool
             whether is blacked list or not
         """
+        self._need_reload_from_cache()
         blacklist = self.get_setting("black_list_uvci", "black_list_uvci")
         blacklisted_ucvi = blacklist.get("value").split(";")
         return uvci in blacklisted_ucvi
@@ -70,8 +72,7 @@ class Service:
 
         Returns an empty dict if the option is not found.
         """
-        if datetime.now() > self._next_load_from_cache:
-            self._load_from_cache()
+        self._need_reload_from_cache()
         try:
             setting_data: dict = next(
                 iter(
@@ -86,6 +87,10 @@ class Service:
             return setting_data
         except StopIteration:
             return {}
+
+    def _need_reload_from_cache(self) -> None:
+        if datetime.now() > self._next_load_from_cache or not self._dsc_collection or not self._settings:
+            self._load_from_cache()
 
     def _load_from_cache(self) -> None:
         self._dsc_collection: Dsc = (
