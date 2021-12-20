@@ -61,7 +61,7 @@ result = verifier.verify_raw("HC1:GH.....1GH")
 
 ```python
 {
-  'code': 'NOT_VALID', 
+  'code': verifier.Codes.NOT_VALID, 
   'result': False, 
   'message': 'Certificate is not valid', 
   'person': 'Sčasný Svätozár', 
@@ -84,6 +84,9 @@ for example
 result = verifier.verify_image("my_dcc.png")
 assert result['code'] == verifier.Codes.NOT_VALID
 ```
+
+`verify_image` and `verify_raw` may rise `VerificaC19Error` in case you cache 
+is not initialized.
 
 ### Verification mode
 

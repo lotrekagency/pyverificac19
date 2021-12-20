@@ -64,7 +64,7 @@ class Service:
         """
         self._need_reload_from_cache()
         blacklist = self.get_setting("black_list_uvci", "black_list_uvci")
-        blacklisted_ucvi = blacklist.get("value").split(";")
+        blacklisted_ucvi = blacklist.get("value", "").split(";")
         return uvci in blacklisted_ucvi
 
     def get_setting(self, setting_name: str, setting_type: str) -> dict:
@@ -95,6 +95,10 @@ class Service:
             or not self._settings
         ):
             self._load_from_cache()
+            if not self._dsc_collection or not self._settings:
+                raise VerificaC19Error(
+                    "You need to initialize your cache. Call service.update_all()."
+                )
 
     def _load_from_cache(self) -> None:
         self._dsc_collection: Dsc = (
