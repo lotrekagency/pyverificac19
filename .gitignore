@@ -6,6 +6,7 @@ venv/
 
 .python-version
 verificac19/service/cache_data/
+/cache_data/
 
 # Test
 .coverage
