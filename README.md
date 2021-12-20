@@ -4,7 +4,7 @@
 
 [![Latest Version](https://img.shields.io/pypi/v/verificac19.svg)](https://pypi.python.org/pypi/verificac19/)
 [![CI](https://github.com/lotrekagency/pyverificac19/actions/workflows/ci.yml/badge.svg)](https://github.com/lotrekagency/pyverificac19)
-[![Coverage](https://codecov.io/gh/lotrekagency/pyverificac19/branch/master/graph/badge.svg?token=SZ7lyP073V)](https://codecov.io/gh/lotrekagency/pyverificac19)
+[![codecov](https://codecov.io/gh/lotrekagency/pyverificac19/branch/main/graph/badge.svg?token=UGMC9QK5F5)](https://codecov.io/gh/lotrekagency/pyverificac19)
 [![Supported Python versions](https://img.shields.io/badge/python-3.7%2C%203.8%2C%203.9%2C%203.10-blue.svg)](https://pypi.python.org/pypi/verificac19/)
 [![License](https://img.shields.io/github/license/lotrekagency/pyverificac19.svg)](https://pypi.python.org/pypi/dcc-utils/)
 [![Downloads](https://img.shields.io/pypi/dm/verificac19.svg)](https://pypi.python.org/pypi/verificac19/)
