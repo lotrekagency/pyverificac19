@@ -1,15 +1,13 @@
-import pathlib
 import os
 import json
 from typing import Any, Callable, Tuple
 from datetime import datetime, timedelta
 
+
 VALID_CACHE_PERIOD = timedelta(days=1)
 
-CACHE_DATA_DIRECTORY = os.environ.get(
-    "VC19_CACHE_FOLDER",
-    os.path.join(str(pathlib.Path(__file__).parent.resolve()), "cache_data"),
-)
+CACHE_DATA_DIRECTORY = os.environ.get("VC19_CACHE_FOLDER", "cache_data")
+
 if not os.path.exists(CACHE_DATA_DIRECTORY):
     os.makedirs(CACHE_DATA_DIRECTORY, 0o777, True)
 
@@ -42,7 +40,10 @@ def fetch_with_smart_cache(
     file_path = os.path.join(CACHE_DATA_DIRECTORY, file_name)
 
     if not os.path.exists(file_path):
-        return fetch_from_source()
+        if force_cache:
+            return None
+        else:
+            return fetch_from_source()
 
     data, creation_date = _load_cached_file(file_path)
 
