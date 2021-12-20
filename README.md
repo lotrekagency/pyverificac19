@@ -13,16 +13,16 @@
 
 - Python version >= 3.7
 
+Make sure `zbar` is installed in your system
+  * For Mac OS X, it can be installed via `brew install zbar`
+  * Debian systems via `apt install libzbar0`. [Source](https://pypi.org/project/pyzbar/)
+  * Fedora / Red Hat `dnf install zbar`
+
 ## Install
 
 ```sh
 pip install verificac19
 ```
-
-Make sure `zbar` is installed in your system
-  * For Mac OS X, it can be installed via `brew install zbar`
-  * Debian systems via `apt install libzbar0`. [Source](https://pypi.org/project/pyzbar/)
-  * Fedora / Red Hat `dnf install zbar`
 
 ## Usage
 
