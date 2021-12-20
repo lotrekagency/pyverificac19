@@ -1,65 +1,54 @@
 import requests
 from typing import Union, Dict
+from datetime import datetime, timedelta
 
 from ._cache import dump_to_cache, fetch_with_smart_cache
+from ..exceptions import VerificaC19Error
 
 Dsc = Dict[str, str]
 
 
+API_URL = "https://get.dgc.gov.it/v1/dgc"
+
+DSC_URL = f"{API_URL}/signercertificate/update"
+STATUS_URL = f"{API_URL}/signercertificate/status"
+SETTINGS_URL = f"{API_URL}/settings"
+
+DSC_FILE_CACHE_PATH = "dsc.json"
+SETTINGS_FILE_CACHE_PATH = "settings.json"
+
+
 class Service:
+    def __init__(self):
+        self._allowed_kids = []
+        self._load_from_cache()
 
-    API_URL = "https://get.dgc.gov.it/v1/dgc"
-
-    DSC_URL = f"{API_URL}/signercertificate/update"
-    STATUS_URL = f"{API_URL}/signercertificate/status"
-    SETTINGS_URL = f"{API_URL}/settings"
-
-    DSC_FILE_CACHE_PATH = "dsc.json"
-    SETTINGS_FILE_CACHE_PATH = "settings.json"
-
-    _settings = []
-    _allowed_kids = []
-    _dsc_collection = {}
-
-    @classmethod
-    def update_all(cls) -> None:
+    def update_all(self) -> None:
         """Updates dsc and settings data.
 
         Restores dsc and settings data from cache if possible.
         Otherwise it retrieves them from the api.
         """
-
-        cls._dsc_collection: Dsc = fetch_with_smart_cache(
-            cls.DSC_FILE_CACHE_PATH, cls._fetch_dsc
+        self._dsc_collection: Dsc = fetch_with_smart_cache(
+            DSC_FILE_CACHE_PATH, self._fetch_dsc
         )
-        cls._settings: list = fetch_with_smart_cache(
-            cls.SETTINGS_FILE_CACHE_PATH, cls._fetch_settings
+        self._settings: list = fetch_with_smart_cache(
+            SETTINGS_FILE_CACHE_PATH, self._fetch_settings
         )
 
-    @classmethod
-    def _update_from_apis(cls) -> None:
-        cls._settings = cls._fetch_settings()
-
-    @classmethod
-    def update_settings(cls) -> None:
+    def update_settings(self) -> None:
         """Force update settings from apis."""
+        self._settings = self._fetch_settings()
 
-        cls._settings = cls._fetch_settings()
-
-    @classmethod
-    def update_dsc(cls) -> None:
+    def update_dsc(self) -> None:
         """Force update dsc from apis."""
+        self._dsc_collection = self._fetch_dsc()
 
-        cls._dsc_collection = cls._fetch_dsc()
-
-    @classmethod
-    def get_dsc(cls, kid) -> Union[str, None]:
+    def get_dsc(self, kid) -> Union[str, None]:
         """Retrieves dsc from kid."""
+        return self._dsc_collection.get(kid)
 
-        return cls._dsc_collection.get(kid)
-
-    @classmethod
-    def is_blacklisted(cls, uvci: str) -> bool:
+    def is_blacklisted(self, uvci: str) -> bool:
         """Checks whether a green pass is blacked list.
 
         Parameters
@@ -72,24 +61,23 @@ class Service:
         bool
             whether is blacked list or not
         """
-
-        blacklist = cls.get_setting("black_list_uvci", "black_list_uvci")
+        blacklist = self.get_setting("black_list_uvci", "black_list_uvci")
         blacklisted_ucvi = blacklist.get("value").split(";")
         return uvci in blacklisted_ucvi
 
-    @classmethod
-    def get_setting(cls, setting_name: str, setting_type: str) -> dict:
+    def get_setting(self, setting_name: str, setting_type: str) -> dict:
         """Get the setting.
 
         Returns an empty dict if the option is not found.
         """
-
+        if datetime.now() > self._next_load_from_cache:
+            self._load_from_cache()
         try:
             setting_data: dict = next(
                 iter(
                     [
                         setting
-                        for setting in cls._settings
+                        for setting in self._settings
                         if setting["name"] == setting_name
                         and setting["type"] == setting_type
                     ]
@@ -99,39 +87,52 @@ class Service:
         except StopIteration:
             return {}
 
-    @classmethod
-    def _fetch_status(cls) -> dict:
-        response = requests.get(cls.STATUS_URL)
+    def _load_from_cache(self) -> None:
+        self._dsc_collection: Dsc = (
+            fetch_with_smart_cache(DSC_FILE_CACHE_PATH, self._fetch_dsc, True) or {}
+        )
+        self._settings: list = (
+            fetch_with_smart_cache(SETTINGS_FILE_CACHE_PATH, self._fetch_settings, True)
+            or []
+        )
+        self._next_load_from_cache = datetime.now() + timedelta(hours=1)
+
+    def _update_from_apis(self) -> None:
+        self._settings = self._fetch_settings()
+
+    def _fetch_status(self) -> dict:
+        response = requests.get(STATUS_URL)
         if response.status_code == 200:
             return response.json()
-        return []
+        raise VerificaC19Error("Error fetching status")
 
-    @classmethod
-    def _fetch_dsc(cls, token: str = None, dsc_collection: dict = {}) -> dict:
+    def _fetch_dsc(self, token: str = None, dsc_collection: dict = {}) -> dict:
         if not token:
-            cls._allowed_kids = cls._fetch_status()
+            self._allowed_kids = self._fetch_status()
         headers = {"X-RESUME-TOKEN": token}
-        response = requests.get(cls.DSC_URL, headers=headers)
+        response = requests.get(DSC_URL, headers=headers)
 
-        if not response.status_code == 200:
-            dump_to_cache(cls.DSC_FILE_CACHE_PATH, dsc_collection)
+        if response.status_code == 200:
+            pass
+        elif response.status_code == 204:
+            dump_to_cache(DSC_FILE_CACHE_PATH, dsc_collection)
             return dsc_collection
+        else:
+            raise VerificaC19Error("Error fetching DSC")
 
         x_kid = response.headers.get("X-KID")
-        if x_kid in cls._allowed_kids:
+        if x_kid in self._allowed_kids:
             dsc_collection[x_kid] = response.text
         x_resume_token = response.headers.get("X-RESUME-TOKEN")
-        return cls._fetch_dsc(x_resume_token, dsc_collection)
+        return self._fetch_dsc(x_resume_token, dsc_collection)
 
-    @classmethod
-    def _fetch_settings(cls) -> list:
-        response = requests.get(cls.SETTINGS_URL)
+    def _fetch_settings(self) -> list:
+        response = requests.get(SETTINGS_URL)
         if not response.status_code == 200:
-            return []
-
+            raise VerificaC19Error("Error fetching settings")
         settings_data = response.json()
-        dump_to_cache(cls.SETTINGS_FILE_CACHE_PATH, settings_data)
+        dump_to_cache(SETTINGS_FILE_CACHE_PATH, settings_data)
         return settings_data
 
 
-service = Service
+_service = Service()

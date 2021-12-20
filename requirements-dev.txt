@@ -6,3 +6,4 @@ codecov==2.1.12
 coverage==6.2
 pytest-cov==3.0.0
 flake8==4.0.1
+time-machine==2.5.0

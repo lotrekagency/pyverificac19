@@ -6,9 +6,12 @@ from datetime import datetime, timedelta
 
 VALID_CACHE_PERIOD = timedelta(days=1)
 
-CACHE_DATA_DIRECTORY = str(pathlib.Path(__file__).parent.resolve()) + "/cache_data/"
+CACHE_DATA_DIRECTORY = os.environ.get(
+    "VC19_CACHE_FOLDER",
+    os.path.join(str(pathlib.Path(__file__).parent.resolve()), "cache_data"),
+)
 if not os.path.exists(CACHE_DATA_DIRECTORY):
-    os.mkdir(CACHE_DATA_DIRECTORY)
+    os.makedirs(CACHE_DATA_DIRECTORY, 0o777, True)
 
 
 def dump_to_cache(file_name: str, data: Any) -> None:
@@ -19,7 +22,7 @@ def dump_to_cache(file_name: str, data: Any) -> None:
     be refetched.
     """
 
-    file_path = CACHE_DATA_DIRECTORY + file_name
+    file_path = os.path.join(CACHE_DATA_DIRECTORY, file_name)
 
     currect_time = datetime.now().isoformat()
     data_with_date = {"data": data, "time": currect_time}
@@ -27,20 +30,24 @@ def dump_to_cache(file_name: str, data: Any) -> None:
         json.dump(data_with_date, output, indent=2)
 
 
-def fetch_with_smart_cache(file_name: str, fetch_from_source: Callable) -> Any:
+def fetch_with_smart_cache(
+    file_name: str, fetch_from_source: Callable, force_cache=False
+) -> Any:
     """Uses cache if possible otherwiser returns callback.
 
     If the file exists and the date registered is not older than the maximum
     valid cache period, the data is loaded from the  cached file.
     Otherwise, the result of the `fetch_from_source` callable will be returned.
     """
-
-    file_path = CACHE_DATA_DIRECTORY + file_name
+    file_path = os.path.join(CACHE_DATA_DIRECTORY, file_name)
 
     if not os.path.exists(file_path):
         return fetch_from_source()
 
     data, creation_date = _load_cached_file(file_path)
+
+    if force_cache:
+        return data
 
     if _is_date_valid(creation_date):
         return data

@@ -1,3 +1,1 @@
-from .service import Service
-
-service = Service
+from .service import _service
