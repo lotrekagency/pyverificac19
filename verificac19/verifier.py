@@ -295,11 +295,17 @@ class Verifier:
         try:
             dcc = f(path_or_raw)
             if not self._verify_dsc(dcc):
-                return Result(
+                result = Result(
                     self.Codes.NOT_VALID,
                     False,
                     "Signature is not valid",
-                ).payload
+                )
+                if "nam" in dcc.payload:
+                    result = result.add_person(
+                        f"{dcc.payload['nam']['fn']} {dcc.payload['nam']['gn']}",
+                        dcc.payload["dob"],
+                    )
+                return result.payload
             response = self._verify_rules(dcc, super_gp_mode)
             return response
         except DCCParsingError:
