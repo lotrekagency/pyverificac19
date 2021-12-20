@@ -89,7 +89,11 @@ class Service:
             return {}
 
     def _need_reload_from_cache(self) -> None:
-        if datetime.now() > self._next_load_from_cache or not self._dsc_collection or not self._settings:
+        if (
+            datetime.now() > self._next_load_from_cache
+            or not self._dsc_collection
+            or not self._settings
+        ):
             self._load_from_cache()
 
     def _load_from_cache(self) -> None:
