@@ -1,5 +1,5 @@
 from enum import Enum
-from collections.abc import Callable
+from typing import Callable
 from datetime import datetime, timedelta
 
 from dcc_utils import from_image, from_raw

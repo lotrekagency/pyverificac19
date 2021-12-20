@@ -139,7 +139,7 @@ python -m examples.<example_name>
 Copyright (c) 2021 - [Lotrèk Digital Agency](https://lotrek.it/)
 
 ## Contributors
-Here is a list of contributors. Thank you to everyone involved for improving this project, day by day.
+Thank you to everyone involved for improving this project, day by day.
 
 <a href="https://github.com/lotrekagency/pyverificac19">
   <img

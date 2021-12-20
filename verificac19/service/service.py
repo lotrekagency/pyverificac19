@@ -46,7 +46,6 @@ class Service:
 
     def update_settings(self) -> None:
         """Force update settings from apis."""
-
         self._settings = self._fetch_settings()
 
     def update_dsc(self) -> None:
