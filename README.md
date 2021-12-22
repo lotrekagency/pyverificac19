@@ -12,9 +12,9 @@
 
 - Python version >= 3.7
 
-Make sure `zbar` is installed in your system
+Make sure `zbar` is installed in your system. [Source](https://pypi.org/project/pyzbar/).
   * For Mac OS X, it can be installed via `brew install zbar`
-  * Debian systems via `apt install libzbar0`. [Source](https://pypi.org/project/pyzbar/)
+  * Debian systems via `apt install libzbar0`.
   * Fedora / Red Hat `dnf install zbar`
 
 ## Install
@@ -120,9 +120,9 @@ Install dev dependencies
 pip install -r requirements-dev.txt
 ```
 
-Make sure `zbar` is installed in your system
+Make sure `zbar` is installed in your system. [Source](https://pypi.org/project/pyzbar/).
   * For Mac OS X, it can be installed via `brew install zbar`
-  * Debian systems via `apt install libzbar0`. [Source](https://pypi.org/project/pyzbar/)
+  * Debian systems via `apt install libzbar0`.
   * Fedora / Red Hat `dnf install zbar`
 
 ### Run tests
