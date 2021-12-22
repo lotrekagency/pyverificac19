@@ -254,16 +254,18 @@ class Verifier:
             return False
 
     def _verify_uvci(self, payload: dict, certificate_type: str):
-        if len(payload[certificate_type]) > 0:
-            certificate = payload[certificate_type][-1]
-            return not service.is_blacklisted(certificate["ci"])
-        return False
+        if certificate_type not in payload:
+            return False
+        if len(payload[certificate_type]) == 0:
+            return False
+        certificate = payload[certificate_type][-1]
+        return not service.is_blacklisted(certificate["ci"])
 
     def _verify_rules(self, dcc: DCC, super_gp_mode: Mode):
         payload = dcc.payload
-        if "v" in payload and self._verify_uvci(payload, "v"):
+        if "v" in payload:
             result = self._check_vaccination(payload)
-        elif "t" in payload and self._verify_uvci(payload, "t"):
+        elif "t" in payload:
             if super_gp_mode == self.Mode.SUPER_GP_MODE:
                 result = Result(
                     self.Codes.NOT_VALID,
@@ -272,13 +274,21 @@ class Verifier:
                 )
             else:
                 result = self._check_test(payload)
-        elif "r" in payload and self._verify_uvci(payload, "r"):
+        elif "r" in payload:
             result = self._check_recovery(payload)
         else:
             result = Result(
                 self.Codes.NOT_EU_DCC,
                 False,
-                "No vaccination, test or recovery statement found in payload or UVCI is in blacklist",
+                "No vaccination, test or recovery statement found in payload",
+            )
+        if result._result and not any(
+            self._verify_uvci(payload, t) for t in ["v", "t", "r"]
+        ):
+            result = Result(
+                self.Codes.NOT_VALID,
+                False,
+                "UVCI in blacklist",
             )
         return result.add_person(
             f"{payload['nam']['fn']} {payload['nam']['gn']}", payload["dob"]
