@@ -67,12 +67,6 @@ class Verifier:
                 "No vaccination, test or recovery statement found in payload",
             )
         last = payload["v"][-1]
-        if service.is_blacklisted(last["ci"]):
-            return Result(
-                self.Codes.NOT_VALID,
-                False,
-                "UVCI is in blacklist",
-            )
 
         if last["mp"] == "Sputnik-V" and last["co"] != "SM":
             return Result(
@@ -259,6 +253,14 @@ class Verifier:
         except ValueError:
             return False
 
+    def _verify_uvci(self, payload: dict, certificate_type: str):
+        if certificate_type not in payload:
+            return False
+        if len(payload[certificate_type]) == 0:
+            return False
+        certificate = payload[certificate_type][-1]
+        return not service.is_blacklisted(certificate["ci"])
+
     def _verify_rules(self, dcc: DCC, super_gp_mode: Mode):
         payload = dcc.payload
         if "v" in payload:
@@ -279,6 +281,14 @@ class Verifier:
                 self.Codes.NOT_EU_DCC,
                 False,
                 "No vaccination, test or recovery statement found in payload",
+            )
+        if result._result and not any(
+            self._verify_uvci(payload, t) for t in ["v", "t", "r"]
+        ):
+            result = Result(
+                self.Codes.NOT_VALID,
+                False,
+                "UVCI in blacklist",
             )
         return result.add_person(
             f"{payload['nam']['fn']} {payload['nam']['gn']}", payload["dob"]
