@@ -2,8 +2,7 @@ from enum import Enum
 from typing import Callable
 from datetime import datetime, timedelta
 
-from dcc_utils import from_image, from_raw
-from dcc_utils.dcc import DCC
+from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
 
 from .service import _service as service
@@ -244,12 +243,12 @@ class Verifier:
             "Recovery statement is valid",
         )
 
-    def _verify_dsc(self, dcc: DCC):
+    def _verify_dsc(self, dcc_obj: dcc.DCC):
         signature = (
             "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----"
-        ).format(service.get_dsc(dcc.kid))
+        ).format(service.get_dsc(dcc_obj.kid))
         try:
-            return dcc.check_signature(signature.encode("utf-8"))
+            return dcc_obj.check_signature(signature.encode("utf-8"))
         except ValueError:
             return False
 
@@ -261,8 +260,8 @@ class Verifier:
         certificate = payload[certificate_type][-1]
         return not service.is_blacklisted(certificate["ci"])
 
-    def _verify_rules(self, dcc: DCC, super_gp_mode: Mode):
-        payload = dcc.payload
+    def _verify_rules(self, dcc_obj: dcc.DCC, super_gp_mode: Mode):
+        payload = dcc_obj.payload
         if "v" in payload:
             result = self._check_vaccination(payload)
         elif "t" in payload:
@@ -296,7 +295,7 @@ class Verifier:
 
     def _verify(
         self,
-        f: Callable[[str, DCCParsingError], DCC],
+        f: Callable[[str, DCCParsingError], dcc.DCC],
         path_or_raw: str,
         super_gp_mode: Mode = None,
     ):
@@ -326,10 +325,10 @@ class Verifier:
             ).payload
 
     def verify_image(self, path: str, super_gp_mode: Mode = None):
-        return self._verify(from_image, path, super_gp_mode)
+        return self._verify(dcc.from_image, path, super_gp_mode)
 
     def verify_raw(self, raw: str, super_gp_mode: Mode = None):
-        return self._verify(from_raw, raw, super_gp_mode)
+        return self._verify(dcc.from_raw, raw, super_gp_mode)
 
 
 _verifier = Verifier()

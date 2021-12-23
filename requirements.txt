@@ -1,2 +1,2 @@
 requests==2.26.0
-dcc-utils==0.1.0
+dcc-utils==0.2.0

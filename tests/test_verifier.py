@@ -4,7 +4,7 @@ import time_machine
 import datetime as dt
 
 from verificac19 import verifier
-from dcc_utils import from_image
+from dcc_utils.dcc import from_image
 
 
 def verify_rules_from_certificate(
