@@ -7,6 +7,7 @@
 [![codecov](https://codecov.io/gh/lotrekagency/pyverificac19/branch/main/graph/badge.svg?token=UGMC9QK5F5)](https://codecov.io/gh/lotrekagency/pyverificac19)
 [![Supported Python versions](https://img.shields.io/badge/python-3.7%2C%203.8%2C%203.9%2C%203.10-blue.svg)](https://pypi.python.org/pypi/verificac19/)
 [![Downloads](https://img.shields.io/pypi/dm/verificac19.svg)](https://pypi.python.org/pypi/verificac19/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## Requirements
 
