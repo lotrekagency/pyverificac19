@@ -15,6 +15,8 @@ TEST_MOLECULAR = "LP6464-4"
 
 TEST_DETECTED = "260373001"
 
+OID_BIS_RECOVERY = ["1.3.6.1.4.1.1847.2021.1.3", "1.3.6.1.4.1.0.1847.2021.1.3"]
+
 
 class Result:
     def __init__(
@@ -267,11 +269,21 @@ class Verifier:
             )
 
         last = payload["r"][-1]
+        cert_info = {
+            "oid": "test",
+            "country": "IT",
+        }  # TODO: call function/method to get real data
+        recovery_type = (
+            "recovery_pv"
+            if cert_info.get("country") == "IT"
+            and cert_info.get("oid") in OID_BIS_RECOVERY
+            else "recovery"
+        )
         recovery_start_day = int(
-            service.get_setting("recovery_cert_start_day", "GENERIC")["value"]
+            service.get_setting(f"{recovery_type}_cert_start_day", "GENERIC")["value"]
         )
         recovery_end_day = int(
-            service.get_setting("recovery_cert_end_day", "GENERIC")["value"]
+            service.get_setting(f"{recovery_type}_cert_end_day", "GENERIC")["value"]
         )
 
         start_date = datetime.strptime(last["df"], "%Y-%m-%d")
