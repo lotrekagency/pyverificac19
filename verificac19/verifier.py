@@ -60,7 +60,7 @@ class Verifier:
     class Mode(Enum):
         SUPER_GP_MODE = "2G"
         NORMAL_DGP = "3G"
-        BOOSTER_GDP = "BOOSTER"
+        BOOSTER_DGP = "BOOSTER"
 
     class Vaccine(Enum):
         JOHNSON = "EU/1/20/1525"
@@ -103,7 +103,7 @@ class Verifier:
         now = datetime.now()
 
         if current_dose < necessary_dose:
-            if mode == self.Mode.BOOSTER_GDP:
+            if mode == self.Mode.BOOSTER_DGP:
                 return Result(
                     self.Codes.NOT_VALID,
                     False,
@@ -177,7 +177,7 @@ class Verifier:
                     f"{doses_str} - Vaccination is expired at : {check_end_day_complete.strftime('%Y-%m-%d')}",
                 )
 
-            if mode == self.Mode.BOOSTER_GDP:
+            if mode == self.Mode.BOOSTER_DGP:
                 if vaccine_type == self.Vaccine.JOHNSON:
                     if current_dose == necessary_dose and current_dose < 2:
                         return Result(
@@ -261,7 +261,7 @@ class Verifier:
                 False,
                 "No vaccination, test or recovery statement found in payload",
             )
-        if mode == self.Mode.BOOSTER_GDP:
+        if mode == self.Mode.BOOSTER_DGP:
             return Result(
                 self.Codes.TEST_NEEDED,
                 False,
@@ -330,14 +330,7 @@ class Verifier:
         if "v" in payload:
             result = self._check_vaccination(payload, mode)
         elif "t" in payload:
-            if mode == self.Mode.SUPER_GP_MODE:
-                result = Result(
-                    self.Codes.NOT_VALID,
-                    False,
-                    "Not valid. Super DGP required.",
-                )
-            else:
-                result = self._check_test(payload, mode)
+            result = self._check_test(payload, mode)
         elif "r" in payload:
             result = self._check_recovery(payload, mode)
         else:

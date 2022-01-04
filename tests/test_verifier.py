@@ -129,6 +129,46 @@ def test_certificates_rules():
         verifier.Codes.NOT_VALID,
         "^Test Result is expired at .*$",
     )
+    # Doses 2/2 needs test with Booster Mode
+    verify_rules_from_image(
+        os.path.join("tests", "data", "eu_test_certificates", "SK_4.png"),
+        False,
+        verifier.Codes.TEST_NEEDED,
+        "^Test needed$",
+        verifier.Mode.BOOSTER_DGP
+    )
+    # Doses 3/2 ok with Booster Mode
+    dcc_booster_vaccination = from_image(
+        os.path.join("tests", "data", "eu_test_certificates", "SK_4.png"),
+    )
+    dcc_booster_vaccination._payload["v"][-1]["dn"] = 3
+    verify_rules_from_certificate(
+        dcc_booster_vaccination,
+        True,
+        "^Doses 3/2 - Vaccination is valid .*$",
+        verifier.Mode.BOOSTER_DGP
+    )
+
+    # Doses 1/1 Johnson with Booster Mode
+    dcc_johnson_vaccination = from_image(
+        os.path.join("tests", "data", "eu_test_certificates", "SK_5.png"),
+    )
+    dcc_johnson_vaccination._payload["v"][-1]["mp"] = verifier.Vaccine.JOHNSON
+    verify_rules_from_certificate(
+        dcc_johnson_vaccination,
+        True,
+        "^Vaccine is not valid in Booster mode$",
+        verifier.Mode.BOOSTER_DGP
+    )
+    # Doses 2/2 Johnson with Booster Mode
+    dcc_johnson_vaccination._payload["v"][-1]["dn"] = 2
+    dcc_johnson_vaccination._payload["v"][-1]["sd"] = 2
+    verify_rules_from_certificate(
+        dcc_johnson_vaccination,
+        True,
+        "^Doses 2/2 - Vaccination is valid .*$",
+        verifier.Mode.BOOSTER_DGP
+    )
 
     # Valid test results
     traveller = time_machine.travel(dt.datetime(2021, 5, 22))
@@ -150,8 +190,16 @@ def test_certificates_rules():
         os.path.join("tests", "data", "eu_test_certificates", "SK_8.png"),
         False,
         verifier.Codes.NOT_VALID,
-        "^Not valid. Super DGP required.$",
+        "^Not valid. Super DGP or Booster required.$",
         verifier.Mode.SUPER_GP_MODE,
+    )
+    # Verify with Booster Mode
+    verify_rules_from_image(
+        os.path.join("tests", "data", "eu_test_certificates", "SK_7.png"),
+        False,
+        verifier.Codes.NOT_VALID,
+        "^Not valid. Super DGP or Booster required.$",
+        verifier.Mode.BOOSTER_DGP,
     )
     traveller.stop()
     # Doses 1/2 valid only in Italy
@@ -162,6 +210,14 @@ def test_certificates_rules():
         True,
         verifier.Codes.VALID,
         "^Doses 1/2 - Vaccination is valid .*$",
+    )
+    # Doses 1/2 not valid with Booster Mode
+    verify_rules_from_image(
+        os.path.join("tests", "data", "eu_test_certificates", "SK_1.png"),
+        False,
+        verifier.Codes.NOT_VALID,
+        "^Vaccine is not valid in Booster mode$",
+        verifier.Mode.BOOSTER_DGP
     )
     traveller.stop()
     # Test result not valid yet
@@ -234,6 +290,14 @@ def test_certificates_rules():
         "^Recovery statement is expired",
     )
     traveller.stop()
+    # Recovery needs test with Booster Mode
+    verify_rules_from_image(
+        os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
+        False,
+        verifier.Codes.TEST_NEEDED,
+        "^Test needed",
+        verifier.Mode.BOOSTER_DGP,
+    )
     # Not valid greenpass without recovery
     dcc_without_recovery = from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
