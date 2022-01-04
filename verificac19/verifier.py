@@ -52,13 +52,18 @@ class Verifier:
         NOT_EU_DCC = "NOT_EU_DCC"
         NOT_VALID = "NOT_VALID"
         NOT_VALID_YET = "NOT_VALID_YET"
+        TEST_NEEDED = "TEST_NEEDED"
         VALID = "VALID"
 
     class Mode(Enum):
         SUPER_GP_MODE = "2G"
         NORMAL_DGP = "3G"
+        BOOSTER_GDP = "BOOSTER"
 
-    def _check_vaccination(self, payload: dict):
+    class Vaccine(Enum):
+        JOHNSON = "EU/1/20/1525"
+
+    def _check_vaccination(self, payload: dict, mode: Mode):
         if len(payload["v"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
@@ -66,8 +71,9 @@ class Verifier:
                 "No vaccination, test or recovery statement found in payload",
             )
         last = payload["v"][-1]
+        vaccine_type = last["mp"]
 
-        if last["mp"] == "Sputnik-V" and last["co"] != "SM":
+        if vaccine_type == "Sputnik-V" and last["co"] != "SM":
             return Result(
                 self.Codes.NOT_VALID,
                 False,
@@ -95,13 +101,22 @@ class Verifier:
         now = datetime.now()
 
         if current_dose < necessary_dose:
+            if mode == self.Mode.BOOSTER_GDP:
+                return Result(
+                    self.Codes.NOT_VALID,
+                    False,
+                    "Vaccine is not valid in Booster mode",
+                )
+
             vaccine_start_day_not_complete = int(
-                service.get_setting("vaccine_start_day_not_complete", last["mp"])[
+                service.get_setting("vaccine_start_day_not_complete", vaccine_type)[
                     "value"
                 ]
             )
             vaccine_end_day_not_complete = int(
-                service.get_setting("vaccine_end_day_not_complete", last["mp"])["value"]
+                service.get_setting("vaccine_end_day_not_complete", vaccine_type)[
+                    "value"
+                ]
             )
             check_start_day_not_complete = vaccine_date + timedelta(
                 days=vaccine_start_day_not_complete
@@ -128,10 +143,10 @@ class Verifier:
             )
         else:
             vaccine_start_day_complete = int(
-                service.get_setting("vaccine_start_day_complete", last["mp"])["value"]
+                service.get_setting("vaccine_start_day_complete", vaccine_type)["value"]
             )
             vaccine_end_day_complete = int(
-                service.get_setting("vaccine_end_day_complete", last["mp"])["value"]
+                service.get_setting("vaccine_end_day_complete", vaccine_type)["value"]
             )
             check_start_day_complete = vaccine_date + timedelta(
                 days=vaccine_start_day_complete
@@ -139,6 +154,14 @@ class Verifier:
             check_end_day_complete = vaccine_date + timedelta(
                 days=vaccine_end_day_complete
             )
+
+            if vaccine_type == self.Vaccine.JOHNSON and (
+                current_dose > necessary_dose
+                or current_dose == necessary_dose
+                and current_dose >= 2
+            ):
+                check_start_day_complete = vaccine_date
+
             if now < check_start_day_complete:
                 return Result(
                     self.Codes.NOT_VALID_YET,
@@ -151,19 +174,42 @@ class Verifier:
                     False,
                     f"{doses_str} - Vaccination is expired at : {check_end_day_complete.strftime('%Y-%m-%d')}",
                 )
+
+            if mode == self.Mode.BOOSTER_GDP:
+                if vaccine_type == self.Vaccine.JOHNSON:
+                    if current_dose == necessary_dose and current_dose < 2:
+                        return Result(
+                            self.Codes.TEST_NEEDED,
+                            False,
+                            "Test needed",
+                        )
+                elif current_dose == necessary_dose and current_dose < 3:
+                    return Result(
+                        self.Codes.TEST_NEEDED,
+                        False,
+                        "Test needed",
+                    )
+
             return Result(
                 self.Codes.VALID,
                 True,
                 f"{doses_str} - Vaccination is valid - [{check_start_day_complete.strftime('%Y-%m-%d')} - {check_end_day_complete.strftime('%Y-%m-%d')}]",
             )
 
-    def _check_test(self, payload: dict):
+    def _check_test(self, payload: dict, mode: Mode):
         if len(payload["t"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
                 False,
                 "No vaccination, test or recovery statement found in payload",
             )
+        if mode != self.Mode.NORMAL_DGP:
+            return Result(
+                self.Codes.NOT_VALID,
+                False,
+                "Not valid. Super DGP or Booster required.",
+            )
+
         test = payload["t"][-1]
         if test["tr"] == TEST_DETECTED:
             return Result(
@@ -206,13 +252,20 @@ class Verifier:
             f'Test Result is valid [{start_datetime.strftime("%Y-%m-%d %H:%M:%S")} - {end_datetime.strftime("%Y-%m-%d %H:%M:%S")}]',
         )
 
-    def _check_recovery(self, payload: dict):
+    def _check_recovery(self, payload: dict, mode: Mode):
         if len(payload["r"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
                 False,
                 "No vaccination, test or recovery statement found in payload",
             )
+        if mode == self.Mode.BOOSTER_GDP:
+            return Result(
+                self.Codes.TEST_NEEDED,
+                False,
+                "Test needed",
+            )
+
         last = payload["r"][-1]
         recovery_start_day = int(
             service.get_setting("recovery_cert_start_day", "GENERIC")["value"]
@@ -260,12 +313,12 @@ class Verifier:
         certificate = payload[certificate_type][-1]
         return not service.is_blacklisted(certificate["ci"])
 
-    def _verify_rules(self, dcc_obj: dcc.DCC, super_gp_mode: Mode):
+    def _verify_rules(self, dcc_obj: dcc.DCC, mode: Mode):
         payload = dcc_obj.payload
         if "v" in payload:
-            result = self._check_vaccination(payload)
+            result = self._check_vaccination(payload, mode)
         elif "t" in payload:
-            if super_gp_mode == self.Mode.SUPER_GP_MODE:
+            if mode == self.Mode.SUPER_GP_MODE:
                 result = Result(
                     self.Codes.NOT_VALID,
                     False,
@@ -297,10 +350,10 @@ class Verifier:
         self,
         f: Callable[[str, DCCParsingError], dcc.DCC],
         path_or_raw: str,
-        super_gp_mode: Mode = None,
+        mode: Mode = None,
     ):
-        if super_gp_mode is None:
-            super_gp_mode = self.Mode.NORMAL_DGP
+        if mode is None:
+            mode = self.Mode.NORMAL_DGP
         try:
             dcc = f(path_or_raw)
             if not self._verify_dsc(dcc):
@@ -315,7 +368,7 @@ class Verifier:
                         dcc.payload["dob"],
                     )
                 return result.payload
-            response = self._verify_rules(dcc, super_gp_mode)
+            response = self._verify_rules(dcc, mode)
             return response
         except DCCParsingError:
             return Result(
@@ -324,11 +377,11 @@ class Verifier:
                 "Certificate is not valid",
             ).payload
 
-    def verify_image(self, path: str, super_gp_mode: Mode = None):
-        return self._verify(dcc.from_image, path, super_gp_mode)
+    def verify_image(self, path: str, mode: Mode = None):
+        return self._verify(dcc.from_image, path, mode)
 
-    def verify_raw(self, raw: str, super_gp_mode: Mode = None):
-        return self._verify(dcc.from_raw, raw, super_gp_mode)
+    def verify_raw(self, raw: str, mode: Mode = None):
+        return self._verify(dcc.from_raw, raw, mode)
 
 
 _verifier = Verifier()
