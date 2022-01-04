@@ -337,9 +337,9 @@ class Verifier:
                     "Not valid. Super DGP required.",
                 )
             else:
-                result = self._check_test(payload)
+                result = self._check_test(payload, mode)
         elif "r" in payload:
-            result = self._check_recovery(payload)
+            result = self._check_recovery(payload, mode)
         else:
             result = Result(
                 self.Codes.NOT_EU_DCC,
