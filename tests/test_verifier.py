@@ -152,6 +152,7 @@ def test_certificates_rules():
     verify_rules_from_certificate(
         dcc_booster_vaccination,
         True,
+        verifier.Codes.VALID,
         "^Doses 3/2 - Vaccination is valid .*$",
         verifier.Mode.BOOSTER_DGP
     )
@@ -160,11 +161,12 @@ def test_certificates_rules():
     dcc_johnson_vaccination = from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_5.png"),
     )
-    dcc_johnson_vaccination._payload["v"][-1]["mp"] = verifier.Vaccine.JOHNSON
+    dcc_johnson_vaccination._payload["v"][-1]["mp"] = "EU/1/20/1525"
     verify_rules_from_certificate(
         dcc_johnson_vaccination,
-        True,
-        "^Vaccine is not valid in Booster mode$",
+        False,
+        verifier.Codes.TEST_NEEDED,
+        "^Test needed$",
         verifier.Mode.BOOSTER_DGP
     )
     # Doses 2/2 Johnson with Booster Mode
@@ -173,6 +175,7 @@ def test_certificates_rules():
     verify_rules_from_certificate(
         dcc_johnson_vaccination,
         True,
+        verifier.Codes.VALID,
         "^Doses 2/2 - Vaccination is valid .*$",
         verifier.Mode.BOOSTER_DGP
     )

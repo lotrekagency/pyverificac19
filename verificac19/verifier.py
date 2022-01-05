@@ -16,6 +16,8 @@ TEST_MOLECULAR = "LP6464-4"
 
 TEST_DETECTED = "260373001"
 
+JOHNSON_VACCINE_ID = "EU/1/20/1525"
+
 OID_BIS_RECOVERY = ["1.3.6.1.4.1.1847.2021.1.3", "1.3.6.1.4.1.0.1847.2021.1.3"]
 
 
@@ -63,10 +65,8 @@ class Verifier:
         NORMAL_DGP = "3G"
         BOOSTER_DGP = "BOOSTER"
 
-    class Vaccine(Enum):
-        JOHNSON = "EU/1/20/1525"
-
-    def _check_vaccination(self, payload: dict, mode: Mode):
+    def _check_vaccination(self, dcc: dcc.DCC, mode: Mode):
+        payload = dcc.payload
         if len(payload["v"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
@@ -158,7 +158,7 @@ class Verifier:
                 days=vaccine_end_day_complete
             )
 
-            if vaccine_type == self.Vaccine.JOHNSON and (
+            if vaccine_type == JOHNSON_VACCINE_ID and (
                 current_dose > necessary_dose
                 or current_dose == necessary_dose
                 and current_dose >= 2
@@ -179,7 +179,7 @@ class Verifier:
                 )
 
             if mode == self.Mode.BOOSTER_DGP:
-                if vaccine_type == self.Vaccine.JOHNSON:
+                if vaccine_type == JOHNSON_VACCINE_ID:
                     if current_dose == necessary_dose and current_dose < 2:
                         return Result(
                             self.Codes.TEST_NEEDED,
@@ -199,7 +199,8 @@ class Verifier:
                 f"{doses_str} - Vaccination is valid - [{check_start_day_complete.strftime('%Y-%m-%d')} - {check_end_day_complete.strftime('%Y-%m-%d')}]",
             )
 
-    def _check_test(self, payload: dict, mode: Mode):
+    def _check_test(self, dcc: dcc.DCC, mode: Mode):
+        payload = dcc.payload
         if len(payload["t"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
@@ -255,7 +256,8 @@ class Verifier:
             f'Test Result is valid [{start_datetime.strftime("%Y-%m-%d %H:%M:%S")} - {end_datetime.strftime("%Y-%m-%d %H:%M:%S")}]',
         )
 
-    def _check_recovery(self, payload: dict, mode: Mode):
+    def _check_recovery(self, dcc: dcc.DCC, mode: Mode):
+        payload = dcc.payload
         if len(payload["r"]) == 0:
             return Result(
                 self.Codes.NOT_EU_DCC,
@@ -270,10 +272,7 @@ class Verifier:
             )
 
         last = payload["r"][-1]
-        cert_info = {
-            "oid": "test",
-            "country": "IT",
-        }  # TODO: call function/method to get real data
+        cert_info = self._get_dsc_info(service.get_dsc(dcc.kid)) if self._verify_dsc(dcc) else {}
         recovery_type = (
             "recovery_pv"
             if cert_info.get("country") == "IT"
@@ -346,11 +345,11 @@ class Verifier:
     def _verify_rules(self, dcc_obj: dcc.DCC, mode: Mode):
         payload = dcc_obj.payload
         if "v" in payload:
-            result = self._check_vaccination(payload, mode)
+            result = self._check_vaccination(dcc_obj, mode)
         elif "t" in payload:
-            result = self._check_test(payload, mode)
+            result = self._check_test(dcc_obj, mode)
         elif "r" in payload:
-            result = self._check_recovery(payload, mode)
+            result = self._check_recovery(dcc_obj, mode)
         else:
             result = Result(
                 self.Codes.NOT_EU_DCC,
