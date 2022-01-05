@@ -1,2 +1,3 @@
 requests==2.26.0
-dcc-utils==0.2.0
+dcc-utils==0.2.1
+pyOpenSSL==21.0.0

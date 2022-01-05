@@ -40,6 +40,13 @@ def verify_signature(img_path, expected_result):
     assert result == expected_result
 
 
+def test_get_dsc_info():
+    with open(os.path.join("tests", "data", "raw_dsc")) as dsc:
+        info = verifier._get_dsc_info(dsc.read())
+        assert info["country"] == "IT"
+        assert info["oid"] == "1.3.6.1.4.1.1847.2021.1.3"
+
+
 def test_dcc_not_valid_from_image():
     result = verifier.verify_image(os.path.join("tests", "data", "2.png"))
     assert not result["result"]

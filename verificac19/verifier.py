@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Callable
 from datetime import datetime, timedelta
+from OpenSSL import crypto
 
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
@@ -308,12 +309,29 @@ class Verifier:
             "Recovery statement is valid",
         )
 
+    def _format_dsc(self, dsc: str) -> str:
+        return ("-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----").format(
+            dsc
+        )
+
+    def _get_dsc_info(self, dsc: str):
+        info = {"country": None, "oid": None}
+        cert = crypto.load_certificate(
+            crypto.FILETYPE_PEM, self._format_dsc(dsc).encode("utf-8")
+        )
+        issuer = cert.get_issuer()
+        info["country"] = issuer.C
+        for i in range(cert.get_extension_count()):
+            ext = cert.get_extension(i)
+            if ext.get_short_name() == b"extendedKeyUsage":
+                info["oid"] = str(ext)
+                break
+        return info
+
     def _verify_dsc(self, dcc_obj: dcc.DCC):
-        signature = (
-            "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----"
-        ).format(service.get_dsc(dcc_obj.kid))
+        dsc = service.get_dsc(dcc_obj.kid)
         try:
-            return dcc_obj.check_signature(signature.encode("utf-8"))
+            return dcc_obj.check_signature(self._format_dsc(dsc).encode("utf-8"))
         except ValueError:
             return False
 
