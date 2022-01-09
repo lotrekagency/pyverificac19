@@ -1,5 +1,5 @@
 import requests
-from typing import Tuple, Union, Dict
+from typing import Tuple, TypedDict, Union, Dict
 from datetime import datetime, timedelta
 
 from ._cache import dump_to_cache, fetch_with_smart_cache, load_cached_file
@@ -17,7 +17,7 @@ SETTINGS_URL = f"{API_URL}/settings"
 DSC_FILE_CACHE_PATH = "dsc.json"
 SETTINGS_FILE_CACHE_PATH = "settings.json"
 CHECK_CRL_URL = f"{API_URL}/drl/check"
-DOWNLOAD_CRL_URL = f"{API_URL}/drl/drl"
+DOWNLOAD_CRL_URL = f"{API_URL}/drl"
 CRL_FILE_CACHE = "crl_check.json"
 
 class Service:
@@ -152,6 +152,10 @@ class Service:
     @classmethod
     def _fetch_crl(cls) -> list:
 
+        class UcviList(TypedDict):
+            new: list[str]
+            removed: list[str]
+
         def fetch_crl_check() -> dict:
             response = requests.get(CHECK_CRL_URL)
             crl_check = response.json()
@@ -162,12 +166,17 @@ class Service:
             old_check, _ = load_cached_file(CRL_FILE_CACHE)
             return crl_check["version"] > old_check["version"]
 
-        def fetch_chunks(parameters: dict, fetched_chunks):
+        def fetch_chunks(parameters: dict, already_fetched_ucvis: UcviList):
             prepare_parameters_for_next_request(parameters)
             response = requests.get(DOWNLOAD_CRL_URL, params=parameters)
             chunk = response.json()
+            just_fetched_ucvis = get_ucvis_from_chunk(chunk)
+            all_fetched_ucvis = concatenate_ucvis_lists(already_fetched_ucvis, just_fetched_ucvis)
+
             if is_chunk_last(chunk):
-                return fetch_chunks
+                return all_fetched_ucvis
+
+            return fetch_chunks(parameters, already_fetched_ucvis)
 
 
         def prepare_parameters_for_next_request(parameters: dict) -> None:
@@ -179,12 +188,28 @@ class Service:
         def is_chunk_last(chunk: dict) -> bool:
             return chunk["lastChunk"] == chunk["chunk"]
 
-        def get_ucvis_from_chunk(chunk: dict) -> Tuple[list[str], list[str]]:
+        def get_ucvis_from_chunk(chunk: dict) -> UcviList:
             if "delta" in chunk:
                 delta = chunk["delta"]
-                return delta["insertions"], delta["deletions"]
+                return {
+                    "new": delta["insertions"],
+                    "removed": delta["deletions"]
+                }
 
-            return chunk["revokedUcvi"], []
+            return {
+                "new": chunk["revokedUcvi"],
+                "removed": []
+            }
+
+        def concatenate_ucvis_lists(list_1: UcviList, list_2: UcviList) -> UcviList:
+            return {
+                "new": list_1["new"] + list_2["new"],
+                "removed": list_1["removed"] + list_2["removed"]
+            }
+
+        ucvis = fetch_chunks({"version": 30}, {"new": [], "removed": []})
+        print(ucvis["new"])
+        print(ucvis["removed"])
 
 
         return []
