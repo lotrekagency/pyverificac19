@@ -15,7 +15,7 @@ class MongoCRL(CRL):
         self._db = self._client.VC19
         self._db_uvci = self._db.uvci
 
-    def store_revoked_uvci(self, revoked_uvci=[], deleted_revoked_uvci=[]):
+    def store_revoked_uvci(self, revoked_uvci=[], deleted_revoked_uvci=[]) -> None:
         try:
             self._db_uvci.insert_many(map(lambda uvci: {"_id": uvci}, revoked_uvci))
         except BulkWriteError:
@@ -27,8 +27,8 @@ class MongoCRL(CRL):
         for uvci_to_remove in deleted_revoked_uvci:
             self._db_uvci.delete_one({"_id": uvci_to_remove})
 
-    def is_uvci_revoked(self, uvci: str):
+    def is_uvci_revoked(self, uvci: str) -> bool:
         return self._db_uvci.find_one({"_id": uvci}) is not None
 
-    def clean(self):
+    def clean(self) -> None:
         self._db_uvci.delete_many({})
