@@ -1,8 +1,8 @@
 import requests
-from typing import Union, Dict
+from typing import Tuple, Union, Dict
 from datetime import datetime, timedelta
 
-from ._cache import dump_to_cache, fetch_with_smart_cache
+from ._cache import dump_to_cache, fetch_with_smart_cache, load_cached_file
 from ..exceptions import VerificaC19Error
 
 Dsc = Dict[str, str]
@@ -16,7 +16,9 @@ SETTINGS_URL = f"{API_URL}/settings"
 
 DSC_FILE_CACHE_PATH = "dsc.json"
 SETTINGS_FILE_CACHE_PATH = "settings.json"
-
+CHECK_CRL_URL = f"{API_URL}/drl/check"
+DOWNLOAD_CRL_URL = f"{API_URL}/drl/drl"
+CRL_FILE_CACHE = "crl_check.json"
 
 class Service:
     def __init__(self):
@@ -146,6 +148,46 @@ class Service:
         settings_data = response.json()
         dump_to_cache(SETTINGS_FILE_CACHE_PATH, settings_data)
         return settings_data
+
+    @classmethod
+    def _fetch_crl(cls) -> list:
+
+        def fetch_crl_check() -> dict:
+            response = requests.get(CHECK_CRL_URL)
+            crl_check = response.json()
+            dump_to_cache(CRL_FILE_CACHE, crl_check)
+            return crl_check
+
+        def has_version_increased(crl_check: dict) -> bool:
+            old_check, _ = load_cached_file(CRL_FILE_CACHE)
+            return crl_check["version"] > old_check["version"]
+
+        def fetch_chunks(parameters: dict, fetched_chunks):
+            prepare_parameters_for_next_request(parameters)
+            response = requests.get(DOWNLOAD_CRL_URL, params=parameters)
+            chunk = response.json()
+            if is_chunk_last(chunk):
+                return fetch_chunks
+
+
+        def prepare_parameters_for_next_request(parameters: dict) -> None:
+            if "chunk" in parameters and type(parameters["chunk"]) == int:
+                parameters["chunk"] += 1
+            else:
+                parameters["chunk"] = 1
+
+        def is_chunk_last(chunk: dict) -> bool:
+            return chunk["lastChunk"] == chunk["chunk"]
+
+        def get_ucvis_from_chunk(chunk: dict) -> Tuple[list[str], list[str]]:
+            if "delta" in chunk:
+                delta = chunk["delta"]
+                return delta["insertions"], delta["deletions"]
+
+            return chunk["revokedUcvi"], []
+
+
+        return []
 
 
 _service = Service()
