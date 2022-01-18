@@ -32,3 +32,31 @@ class MongoCRL(CRL):
 
     def clean(self) -> None:
         self._db_uvci.delete_many({})
+
+
+    def store_current_version(self, version: int) -> None:
+        collection_to_find = {'_id': 0}
+        updated_data = {
+            '$set': {
+                'version': version
+            }
+        }
+        previous = self._db.version.find_one_and_update(
+            collection_to_find,
+            updated_data
+        )
+
+        if previous is not None:
+            return
+
+        self._db.version.insert_one({
+            '_id': 0,
+            'version': version
+        })
+
+    def get_version(self) -> int|None:
+        document = self._db.version.find_one()
+        if document is None:
+            return None
+
+        return document['version']
