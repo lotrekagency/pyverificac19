@@ -41,7 +41,7 @@ class MongoCRL(CRL):
                 'version': version
             }
         }
-        previous = self._db.version.find_one_and_update(
+        previous = self._db.crl_version.find_one_and_update(
             collection_to_find,
             updated_data
         )
@@ -55,7 +55,7 @@ class MongoCRL(CRL):
         })
 
     def get_version(self) -> int|None:
-        document = self._db.version.find_one()
+        document = self._db.crl_version.find_one()
         if document is None:
             return None
 
