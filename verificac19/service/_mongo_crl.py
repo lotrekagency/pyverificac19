@@ -60,3 +60,7 @@ class MongoCRL(CRL):
             return None
 
         return document['version']
+
+    def is_db_empty(self) -> bool:
+        current_version = self.get_version()
+        return current_version is None
