@@ -4,20 +4,21 @@ from verificac19.service._settings import CHECK_CRL_URL
 
 class CrlCheck:
 
-    def __init__(self) -> None:
-        self._crl_check = None
-        self.db = MongoCRL()
+    _crl_check = None
+    _db = MongoCRL()
 
-    def fetch_crl_check(self) -> None:
+    @classmethod
+    def fetch_crl_check(cls) -> None:
         response = requests.get(CHECK_CRL_URL)
-        self._crl_check = response.json()
+        cls._crl_check = response.json()
 
-    def is_crl_update_available(self) -> bool:
-        if self._crl_check is None:
-            self.fetch_crl_check()
+    @classmethod
+    def is_crl_update_available(cls) -> bool:
+        if cls._crl_check is None:
+            cls.fetch_crl_check()
 
-        stored_version = self.db.get_version()
-        if stored_version == self._crl_check['version']:
+        stored_version = cls._db.get_version()
+        if stored_version == cls._crl_check['version']:
             return False
 
         return True
