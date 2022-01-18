@@ -42,6 +42,13 @@ class Chunk:
         """
         return self._chunk_data['lastChunk'] == self._number
 
+    def set_next_chunk(self, next_chunk: Chunk) -> None:
+        """Saves next chunk reference.
+
+        Useful for iterating chunk objects of the same crl.
+        """
+        self._next_chunk = next_chunk
+
     @staticmethod
     def is_chunk_diff(chunk_data: dict) -> bool:
         """
