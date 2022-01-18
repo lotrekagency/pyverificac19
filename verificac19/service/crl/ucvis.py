@@ -1,5 +1,5 @@
 from verificac19.service._settings import *
-from verificac19.service._mongo_crl import MongoCRL
+from verificac19.service.crl.mongo import MongoCRL
 
 UciviList = list[str]
 UciviTuple = tuple[str]

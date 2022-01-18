@@ -1,4 +1,4 @@
-from verificac19.service._mongo_crl import MongoCRL
+from verificac19.service.crl.mongo import MongoCRL
 
 
 crl = MongoCRL()

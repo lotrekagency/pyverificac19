@@ -1,5 +1,5 @@
 import requests
-from verificac19.service._mongo_crl import MongoCRL
+from verificac19.service.crl.mongo import MongoCRL
 from verificac19.service._settings import CHECK_CRL_URL
 
 class CrlCheck:
