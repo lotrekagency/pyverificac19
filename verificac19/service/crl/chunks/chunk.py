@@ -49,6 +49,13 @@ class Chunk(object):
         """
         self._next_chunk = next_chunk
 
+
+    def get_ucvis(self) -> UcviData:
+        return self._ucvis
+
+    def get_number(self) -> int:
+        return self._number
+
     @staticmethod
     def is_chunk_diff(chunk_data: dict) -> bool:
         """
