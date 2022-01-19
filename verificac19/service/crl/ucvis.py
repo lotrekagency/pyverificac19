@@ -16,8 +16,8 @@ class UcviData:
         self._new += new
         self._removed += removed
 
-    def get_new(self) -> UciviTuple:
-        return tuple(self._new)
+    def get_new(self) -> UciviList:
+        return self._new
 
-    def get_removed(self) -> UciviTuple:
-        return tuple(self._removed)
+    def get_removed(self) -> UciviList:
+        return self._removed
