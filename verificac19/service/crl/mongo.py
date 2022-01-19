@@ -37,7 +37,7 @@ class MongoCRL(CRL):
 
         if flat and query_result is not None:
             field_name = fields[0]
-            return query_result[field_name]
+            return query_result.get(field_name)
 
         return query_result
 
