@@ -1,13 +1,13 @@
 from __future__ import annotations
 from verificac19.service.crl.ucvis import UcviData
 
-class Chunk:
+class Chunk(object):
 
-    def __new__(cls, chunk_data: dict, next_chunk: Chunk) -> Chunk:
+    def __new__(cls, chunk_data: dict, next_chunk: Chunk=None) -> Chunk:
         if cls.is_chunk_diff(chunk_data):
-            return DiffChunk(chunk_data, next_chunk)
+            return object.__new__(DiffChunk)
 
-        return cls(chunk_data, next_chunk)
+        return object.__new__(Chunk)
 
 
     def __init__(self, chunk_data: dict, next_chunk: Chunk=None) -> None:
