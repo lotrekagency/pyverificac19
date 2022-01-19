@@ -22,3 +22,10 @@ class CrlCheck:
             return False
 
         return True
+
+    @classmethod
+    def get_server_version(cls) -> int | None:
+        if cls._crl_check is None:
+            cls.fetch_crl_check()
+
+        return cls._crl_check['version']
