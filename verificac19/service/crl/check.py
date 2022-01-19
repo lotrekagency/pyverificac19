@@ -17,7 +17,7 @@ class CrlCheck:
         if cls._crl_check is None:
             cls.fetch_crl_check()
 
-        stored_version = cls._db.get_version()
+        stored_version = cls._db.get_meta_data_field('version')
         if stored_version == cls._crl_check['version']:
             return False
 

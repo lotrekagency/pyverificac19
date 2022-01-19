@@ -1,3 +1,5 @@
+from typing import Any
+
 import os
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError, DuplicateKeyError
@@ -14,6 +16,36 @@ class MongoCRL(CRL):
         self._client = MongoClient(MONGO_DB_CONNECTION_URL)
         self._db = self._client.VC19
         self._db_uvci = self._db.uvci
+        self._db_meta = self._db.meta
+
+    def set_meta_data(self, **data) -> None:
+        meta_data = self._db_meta.find_one()
+
+        if meta_data is None:
+            self._initialise_meta_info(data)
+            return
+
+        self._db_meta.find_one_and_update({}, {"$set": data})
+
+    def get_meta_data(self, *fields: str, flat: bool=False) -> dict | None:
+        if len(fields) != 1 and flat:
+            raise ValueError('flat can be set only when selecting one field')
+
+        projection_settings = {field: True for field in fields}
+        projection_settings['_id'] = False
+        query_result = self._db_meta.find_one(projection=projection_settings)
+
+        if flat and query_result is not None:
+            field_name = fields[0]
+            return query_result[field_name]
+
+        return query_result
+
+    def get_meta_data_field(self, field) -> Any | None:
+        return self.get_meta_data(field, flat=True)
+
+    def _initialise_meta_info(self, data: dict):
+        self._db_meta.insert_one(data)
 
     def store_revoked_uvci(self, revoked_uvci=[], deleted_revoked_uvci=[]) -> None:
         try:
@@ -32,35 +64,10 @@ class MongoCRL(CRL):
 
     def clean(self) -> None:
         self._db_uvci.delete_many({})
-
+        self._db_meta.delete_many({})
 
     def store_current_version(self, version: int) -> None:
-        collection_to_find = {'_id': 0}
-        updated_data = {
-            '$set': {
-                'version': version
-            }
-        }
-        previous = self._db.crl_version.find_one_and_update(
-            collection_to_find,
-            updated_data
-        )
-
-        if previous is not None:
-            return
-
-        self._db.version.insert_one({
-            '_id': 0,
-            'version': version
-        })
-
-    def get_version(self) -> int|None:
-        document = self._db.crl_version.find_one()
-        if document is None:
-            return None
-
-        return document['version']
+        self.set_meta_data(version=version)
 
     def is_db_empty(self) -> bool:
-        current_version = self.get_version()
-        return current_version is None
+        return self.get_meta_data() is None
