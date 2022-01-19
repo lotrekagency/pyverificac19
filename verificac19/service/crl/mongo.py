@@ -62,9 +62,12 @@ class MongoCRL(CRL):
     def is_uvci_revoked(self, uvci: str) -> bool:
         return self._db_uvci.find_one({"_id": uvci}) is not None
 
-    def clean(self) -> None:
+    def clean_all(self) -> None:
         self._db_uvci.delete_many({})
         self._db_meta.delete_many({})
+
+    def clean_ucvis(self) -> None:
+        self._db_uvci.delete_many({})
 
     def store_current_version(self, version: int) -> None:
         self.set_meta_data(version=version)
