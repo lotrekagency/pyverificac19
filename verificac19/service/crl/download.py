@@ -8,17 +8,21 @@ from .chunks import Chunk, ChunkList
 
 class CrlDownloader:
     _db = MongoCRL()
-    _params = None
+    _params = {}
+    _check = CrlCheck()
 
     @classmethod
     def prepare_for_download(cls):
-        CrlCheck.fetch_crl_check()
+        cls._check.fetch_crl_check()
 
         if cls._db.is_db_empty():
+            print('downloading entire crl')
             cls._params = {}
         elif cls._was_download_interrupted():
+            print('download interrupted found')
             cls._prepare_to_resume_interrupted_download()
-        elif CrlCheck.is_crl_update_available():
+        elif cls._check.is_crl_update_available():
+            print('update available')
             stored_version = cls._db.get_meta_data_field('version')
             cls._params = {'version': stored_version}
         else:
@@ -29,7 +33,7 @@ class CrlDownloader:
     def _prepare_to_resume_interrupted_download(cls) -> None:
         cls._params = {}
         updating_to_version = cls._db.get_meta_data_field('updating_to_version')
-        current_server_version = CrlCheck.get_server_version()
+        current_server_version = cls._check.get_server_version()
 
         if current_server_version != updating_to_version:
             cls._db.clean_ucvis()
@@ -65,7 +69,7 @@ class CrlDownloader:
     def _set_download_started_in_db(cls):
         data = {
             'in_progress': True,
-            'updating_to_version': CrlCheck.get_server_version()
+            'updating_to_version': cls._check.get_server_version()
         }
         cls._db.set_meta_data(**data)
 
@@ -73,14 +77,17 @@ class CrlDownloader:
     def _download_crl(cls, params: dict) -> ChunkList:
         chunks = ChunkList()
         download_not_completed = True
-        chunk_n = 1
+        chunk_n = params.get('chunk') or 1
         while download_not_completed:
             params['chunk'] = chunk_n
             chunk = cls._download_chunk(params)
             chunks.add_chunk(chunk)
             download_not_completed = not chunk.is_chunk_last()
+            cls._save_chunk_to_db(chunk)
             chunk_n += 1
 
+        downloaded_version = cls._check.get_server_version()
+        cls._db.set_meta_data(in_progress=False, version=downloaded_version)
         return chunks
 
     @classmethod
@@ -88,3 +95,9 @@ class CrlDownloader:
         response = requests.get(DOWNLOAD_CRL_URL, params=request_params)
         chunk_data = response.json()
         return Chunk(chunk_data)
+
+    @classmethod
+    def _save_chunk_to_db(cls, chunk: Chunk) -> None:
+        ucvis = chunk.get_ucvis()
+        cls._db.store_revoked_uvci(ucvis.get_new(), ucvis.get_removed())
+        cls._db.set_meta_data(last_stored_chunk=chunk.get_number())
