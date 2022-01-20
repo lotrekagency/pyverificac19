@@ -13,3 +13,5 @@ SETTINGS_FILE_CACHE_PATH = "settings.json"
 CHECK_CRL_URL = f"{API_URL}/drl/check"
 DOWNLOAD_CRL_URL = f"{API_URL}/drl"
 CRL_FILE_CACHE = "crl_check.json"
+
+MAX_ERRORS_CRL_DOWNLOAD = 3

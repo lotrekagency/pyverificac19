@@ -1,4 +1,6 @@
+from json.decoder import JSONDecodeError
 import requests
+from requests import RequestException
 from verificac19.service._settings import *
 from .check import CrlCheck
 from .mongo import MongoCRL
@@ -6,14 +8,19 @@ from .mongo import MongoCRL
 from verificac19.service._settings import DOWNLOAD_CRL_URL
 from .chunks import Chunk, ChunkList
 
+DOWNLOAD_SUCCESSFUL = 0
+DOWNLOAD_FAILED = -1
+
 class CrlDownloader:
     _db = MongoCRL()
     _params = {}
     _check = CrlCheck()
+    _is_local_crl_up_to_date = None
 
     @classmethod
-    def prepare_for_download(cls):
+    def _prepare_for_download(cls):
         cls._check.fetch_crl_check()
+        cls._is_local_crl_up_to_date = True
 
         if cls._db.is_db_empty():
             print('downloading entire crl')
@@ -26,13 +33,14 @@ class CrlDownloader:
             stored_version = cls._db.get_meta_data_field('version')
             cls._params = {'version': stored_version}
         else:
-            cls._is_download_needed = False
+            print('no download needed')
+            cls._is_local_crl_up_to_date = False
 
 
     @classmethod
     def _prepare_to_resume_interrupted_download(cls) -> None:
         cls._params = {}
-        updating_to_version = cls._db.get_meta_data_field('updating_to_version')
+        updating_to_version = cls._get_interrupted_download_version()
         current_server_version = cls._check.get_server_version()
 
         if current_server_version != updating_to_version:
@@ -41,7 +49,6 @@ class CrlDownloader:
 
         last_stored_chunk = cls._db.get_meta_data_field('last_stored_chunk')
         cls._params = {
-            'version': current_server_version,
             'chunk': last_stored_chunk
         }
 
@@ -51,19 +58,27 @@ class CrlDownloader:
         return bool(cls._db.get_meta_data_field('in_progress'))
 
     @classmethod
-    def _getinterrupted_download_version(cls) -> int | None:
-
+    def _get_interrupted_download_version(cls) -> int | None:
         version = cls._db.get_meta_data_field('updating_to_version')
         return version
 
 
     @classmethod
-    def download_crl(cls):
-        if type(cls._params) is not dict:
-            raise ValueError("Request parameters not valid. Maybe forgot to run prepare_for_download() ?")
+    def update_crl(cls):
+        errors_left = MAX_ERRORS_CRL_DOWNLOAD
+        while errors_left > 0:
+            cls._prepare_for_download()
+            if not cls._is_local_crl_up_to_date:
+                return
 
-        chunks = cls._download_crl(cls._params)
-        return chunks
+            cls._set_download_started_in_db()
+            try:
+                chunks = cls._download_crl(cls._params)
+                return DOWNLOAD_SUCCESSFUL
+            except (RequestException, JSONDecodeError):
+                errors_left -= 1
+
+        return DOWNLOAD_FAILED
 
     @classmethod
     def _set_download_started_in_db(cls):
@@ -77,14 +92,14 @@ class CrlDownloader:
     def _download_crl(cls, params: dict) -> ChunkList:
         chunks = ChunkList()
         download_not_completed = True
-        chunk_n = params.get('chunk') or 1
+        if not params.get('chunk'):
+            params['chunk'] = 1
         while download_not_completed:
-            params['chunk'] = chunk_n
             chunk = cls._download_chunk(params)
             chunks.add_chunk(chunk)
             download_not_completed = not chunk.is_chunk_last()
             cls._save_chunk_to_db(chunk)
-            chunk_n += 1
+            params['chunk'] += 1
 
         downloaded_version = cls._check.get_server_version()
         cls._db.set_meta_data(in_progress=False, version=downloaded_version)
@@ -93,11 +108,22 @@ class CrlDownloader:
     @classmethod
     def _download_chunk(cls, request_params: dict) -> Chunk:
         response = requests.get(DOWNLOAD_CRL_URL, params=request_params)
+        response.raise_for_status()
         chunk_data = response.json()
         return Chunk(chunk_data)
 
     @classmethod
     def _save_chunk_to_db(cls, chunk: Chunk) -> None:
         ucvis = chunk.get_ucvis()
-        cls._db.store_revoked_uvci(ucvis.get_new(), ucvis.get_removed())
+        cls._db.update_crl(ucvis.get_new(), ucvis.get_removed())
         cls._db.set_meta_data(last_stored_chunk=chunk.get_number())
+
+    @classmethod
+    def is_local_crl_valid(cls) -> bool:
+        if cls._was_download_interrupted:
+            return False
+
+        if cls._check.is_crl_update_available():
+            return False
+
+        return True
