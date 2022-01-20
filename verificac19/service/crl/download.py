@@ -50,6 +50,13 @@ class CrlDownloader:
 
         return DOWNLOAD_FAILED
 
+    @classmethod
+    def was_download_interrupted(cls) -> bool:
+        return bool(cls._db.get_meta_data_field('in_progress'))
+
+    @classmethod
+    def is_crl_update_available(cls) -> bool:
+        return CrlDownloader._check.is_crl_update_available()
 
     @classmethod
     def _prepare_for_download(cls):
@@ -57,17 +64,13 @@ class CrlDownloader:
         cls._is_local_crl_up_to_date = True
 
         if cls._db.is_db_empty():
-            print('downloading entire crl')
             cls._params = {}
-        elif cls._was_download_interrupted():
-            print('download interrupted found')
+        elif cls.was_download_interrupted():
             cls._prepare_to_resume_interrupted_download()
         elif cls._check.is_crl_update_available():
-            print('update available')
             stored_version = cls._db.get_meta_data_field('version')
             cls._params = {'version': stored_version}
         else:
-            print('no download needed')
             cls._is_local_crl_up_to_date = False
 
 
@@ -87,9 +90,6 @@ class CrlDownloader:
         }
 
 
-    @classmethod
-    def _was_download_interrupted(cls) -> bool:
-        return bool(cls._db.get_meta_data_field('in_progress'))
 
     @classmethod
     def _get_interrupted_download_version(cls) -> int | None:
@@ -132,12 +132,3 @@ class CrlDownloader:
         cls._db.update_crl(uvcis.get_new(), uvcis.get_removed())
         cls._db.set_meta_data(last_stored_chunk=chunk.get_number())
 
-    @classmethod
-    def is_local_crl_valid(cls) -> bool:
-        if cls._was_download_interrupted:
-            return False
-
-        if cls._check.is_crl_update_available():
-            return False
-
-        return True
