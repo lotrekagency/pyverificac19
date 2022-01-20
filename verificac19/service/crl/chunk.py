@@ -1,5 +1,5 @@
 from __future__ import annotations
-from verificac19.service.crl.ucvis import UcviData
+from verificac19.service.crl.uvcis import UvciData
 
 class Chunk(object):
 
@@ -15,7 +15,7 @@ class Chunk(object):
         self._next_chunk = next_chunk
         self._chunk_data = chunk_data
         self._store_general_chunk_data()
-        self._store_revoked_ucvis()
+        self._store_revoked_uvcis()
 
     def __next__(self):
         if self._next_chunk is None:
@@ -29,9 +29,9 @@ class Chunk(object):
         self._number = self._chunk_data['chunk']
 
 
-    def _store_revoked_ucvis(self):
-        revoked_ucvis = self._chunk_data['revokedUcvi']
-        self._ucvis = UcviData(new=revoked_ucvis)
+    def _store_revoked_uvcis(self):
+        revoked_uvcis = self._chunk_data['revokedUvci']
+        self._uvcis = UvciData(new=revoked_uvcis)
 
     def is_chunk_last(self) -> bool:
         """
@@ -51,8 +51,8 @@ class Chunk(object):
         self._next_chunk = next_chunk
 
 
-    def get_ucvis(self) -> UcviData:
-        return self._ucvis
+    def get_uvcis(self) -> UvciData:
+        return self._uvcis
 
     def get_number(self) -> int:
         return self._number
@@ -76,8 +76,8 @@ class Chunk(object):
         ValueError
             If chunk_data does not contain a valid value
         """
-        revoked_ucvis = chunk_data.get('revokedUcvi')
-        if revoked_ucvis is not None:
+        revoked_uvcis = chunk_data.get('revokedUcvi')
+        if revoked_uvcis is not None:
             return False
 
         delta = chunk_data.get('delta')
@@ -94,7 +94,7 @@ class DiffChunk(Chunk):
         super()._store_general_chunk_data()
         self._from_version = self._chunk_data['fromVersion']
 
-    def _store_revoked_ucvis(self):
-        new_revoked_ucvis = self._chunk_data['delta']['insertions']
-        removed_revoked_ucvis = self._chunk_data['delta']['deletions']
-        self._ucvis = UcviData(new_revoked_ucvis, removed_revoked_ucvis)
+    def _store_revoked_uvcis(self):
+        new_revoked_uvcis = self._chunk_data['delta']['insertions']
+        removed_revoked_uvcis = self._chunk_data['delta']['deletions']
+        self._uvcis = UvciData(new_revoked_uvcis, removed_revoked_uvcis)

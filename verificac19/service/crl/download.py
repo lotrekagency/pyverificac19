@@ -78,7 +78,7 @@ class CrlDownloader:
         current_server_version = cls._check.get_server_version()
 
         if current_server_version != updating_to_version:
-            cls._db.clean_ucvis()
+            cls._db.clean_uvcis()
             return
 
         last_stored_chunk = cls._db.get_meta_data_field('last_stored_chunk')
@@ -128,8 +128,8 @@ class CrlDownloader:
 
     @classmethod
     def _save_chunk_to_db(cls, chunk: Chunk) -> None:
-        ucvis = chunk.get_ucvis()
-        cls._db.update_crl(ucvis.get_new(), ucvis.get_removed())
+        uvcis = chunk.get_uvcis()
+        cls._db.update_crl(uvcis.get_new(), uvcis.get_removed())
         cls._db.set_meta_data(last_stored_chunk=chunk.get_number())
 
     @classmethod

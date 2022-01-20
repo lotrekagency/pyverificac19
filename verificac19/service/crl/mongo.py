@@ -56,7 +56,7 @@ class MongoCRL(CRL):
             return
 
         try:
-            self._db_uvci.insert_many([{"_id": ucvi} for ucvi in revoked_uvci])
+            self._db_uvci.insert_many([{"_id": uvci} for uvci in revoked_uvci])
         except BulkWriteError:
             self._iterative_add_uvci(revoked_uvci)
 
@@ -80,7 +80,7 @@ class MongoCRL(CRL):
         self._db_uvci.delete_many({})
         self._db_meta.delete_many({})
 
-    def clean_ucvis(self) -> None:
+    def clean_uvcis(self) -> None:
         self._db_uvci.delete_many({})
 
     def store_current_version(self, version: int) -> None:
