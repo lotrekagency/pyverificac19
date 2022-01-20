@@ -29,7 +29,7 @@ class Chunk(object):
 
 
     def _store_revoked_uvcis(self):
-        revoked_uvcis = self._chunk_data['revokedUvci']
+        revoked_uvcis = self._chunk_data['revokedUcvi']
         self._uvcis = UvciData(new=revoked_uvcis)
 
     def is_chunk_last(self) -> bool:
