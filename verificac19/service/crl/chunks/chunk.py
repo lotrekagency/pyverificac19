@@ -11,6 +11,7 @@ class Chunk(object):
 
 
     def __init__(self, chunk_data: dict, next_chunk: Chunk=None) -> None:
+        print(chunk_data)
         self._next_chunk = next_chunk
         self._chunk_data = chunk_data
         self._store_general_chunk_data()
@@ -91,7 +92,7 @@ class DiffChunk(Chunk):
 
     def _store_general_chunk_data(self):
         super()._store_general_chunk_data()
-        self._from_version = self._chunk_data['from_version']
+        self._from_version = self._chunk_data['fromVersion']
 
     def _store_revoked_ucvis(self):
         new_revoked_ucvis = self._chunk_data['delta']['insertions']
