@@ -11,7 +11,6 @@ class Chunk(object):
 
 
     def __init__(self, chunk_data: dict, next_chunk: Chunk=None) -> None:
-        print(chunk_data)
         self._next_chunk = next_chunk
         self._chunk_data = chunk_data
         self._store_general_chunk_data()

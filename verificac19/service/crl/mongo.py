@@ -61,7 +61,6 @@ class MongoCRL(CRL):
             self._iterative_add_uvci(revoked_uvci)
 
     def _iterative_add_uvci(self, revoked_uvci: list=[]):
-        print('Exception1')
         for uvci_to_insert in revoked_uvci:
             try:
                 self._db_uvci.insert_one({"_id": uvci_to_insert})
