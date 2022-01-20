@@ -6,7 +6,7 @@ from .check import CrlCheck
 from .mongo import MongoCRL
 
 from verificac19.service._settings import DOWNLOAD_CRL_URL
-from .chunks import Chunk
+from .chunk import Chunk
 
 DOWNLOAD_SUCCESSFUL = 0
 DOWNLOAD_FAILED = -1
