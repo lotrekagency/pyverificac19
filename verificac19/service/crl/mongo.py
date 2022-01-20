@@ -47,17 +47,31 @@ class MongoCRL(CRL):
     def _initialise_meta_info(self, data: dict):
         self._db_meta.insert_one(data)
 
-    def store_revoked_uvci(self, revoked_uvci=[], deleted_revoked_uvci=[]) -> None:
+    def update_crl(self, revoked_uvci=[], deleted_revoked_uvci=[]) -> None:
+        self._bulk_add_uvci(revoked_uvci)
+        self._remove_uvci(deleted_revoked_uvci)
+
+    def _bulk_add_uvci(self, revoked_uvci: list=[]):
+        if len(revoked_uvci) == 0:
+            return
+
         try:
-            self._db_uvci.insert_many(map(lambda uvci: {"_id": uvci}, revoked_uvci))
+            self._db_uvci.insert_many([{"_id": ucvi} for ucvi in revoked_uvci])
         except BulkWriteError:
-            for uvci_to_insert in revoked_uvci:
-                try:
-                    self._db_uvci.insert_one({"_id": uvci_to_insert})
-                except DuplicateKeyError:
-                    pass
+            self._iterative_add_uvci(revoked_uvci)
+
+    def _iterative_add_uvci(self, revoked_uvci: list=[]):
+        print('Exception1')
+        for uvci_to_insert in revoked_uvci:
+            try:
+                self._db_uvci.insert_one({"_id": uvci_to_insert})
+            except DuplicateKeyError:
+                pass
+
+    def _remove_uvci(self, deleted_revoked_uvci: list=[]):
         for uvci_to_remove in deleted_revoked_uvci:
             self._db_uvci.delete_one({"_id": uvci_to_remove})
+
 
     def is_uvci_revoked(self, uvci: str) -> bool:
         return self._db_uvci.find_one({"_id": uvci}) is not None
