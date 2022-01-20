@@ -10,12 +10,46 @@ from .chunk import Chunk
 
 DOWNLOAD_SUCCESSFUL = 0
 DOWNLOAD_FAILED = -1
+DOWNLOAD_NOT_NEEDED = 1
 
 class CrlDownloader:
     _db = MongoCRL()
     _params = {}
     _check = CrlCheck()
     _is_local_crl_up_to_date = None
+
+    @classmethod
+    def run(cls) -> int:
+        """Updates the CRL.
+
+        It updates the CRL by understanding the current state of the database
+        and fetching from the API with the correct parameters based on the
+        locally stored data.
+        If some error occures while retrieving the chunks,
+        it will try again for a limit specified in the settings file.
+
+        Returns
+        -------
+        int
+            Wether the updata has been successful or not. It will return the
+            value of either DOWNLOAD_SUCCESSFUL, DOWNLOAD_NOT_NEEDED or
+            DOWNLOAD_FAILED
+        """
+        errors_left = MAX_ERRORS_CRL_DOWNLOAD
+        while errors_left > 0:
+            cls._prepare_for_download()
+            if not cls._is_local_crl_up_to_date:
+                return DOWNLOAD_NOT_NEEDED
+
+            cls._set_download_started_in_db()
+            try:
+                chunks = cls._download_crl(cls._params)
+                return DOWNLOAD_SUCCESSFUL
+            except (RequestException, JSONDecodeError):
+                errors_left -= 1
+
+        return DOWNLOAD_FAILED
+
 
     @classmethod
     def _prepare_for_download(cls):
@@ -62,23 +96,6 @@ class CrlDownloader:
         version = cls._db.get_meta_data_field('updating_to_version')
         return version
 
-
-    @classmethod
-    def update_crl(cls):
-        errors_left = MAX_ERRORS_CRL_DOWNLOAD
-        while errors_left > 0:
-            cls._prepare_for_download()
-            if not cls._is_local_crl_up_to_date:
-                return
-
-            cls._set_download_started_in_db()
-            try:
-                chunks = cls._download_crl(cls._params)
-                return DOWNLOAD_SUCCESSFUL
-            except (RequestException, JSONDecodeError):
-                errors_left -= 1
-
-        return DOWNLOAD_FAILED
 
     @classmethod
     def _set_download_started_in_db(cls):
