@@ -5,20 +5,10 @@ from datetime import datetime, timedelta
 from ._cache import dump_to_cache, fetch_with_smart_cache, load_cached_file
 from ..exceptions import VerificaC19Error
 
-Dsc = Dict[str, str]
+from ._settings import *
 
-
-API_URL = "https://get.dgc.gov.it/v1/dgc"
-
-DSC_URL = f"{API_URL}/signercertificate/update"
-STATUS_URL = f"{API_URL}/signercertificate/status"
-SETTINGS_URL = f"{API_URL}/settings"
-
-DSC_FILE_CACHE_PATH = "dsc.json"
-SETTINGS_FILE_CACHE_PATH = "settings.json"
-CHECK_CRL_URL = f"{API_URL}/drl/check"
-DOWNLOAD_CRL_URL = f"{API_URL}/drl"
-CRL_FILE_CACHE = "crl_check.json"
+from .crl.download import CrlDownloader
+from .crl.mongo import MongoCRL
 
 class Service:
     def __init__(self):
@@ -37,6 +27,39 @@ class Service:
         self._settings: list = fetch_with_smart_cache(
             SETTINGS_FILE_CACHE_PATH, self._fetch_settings
         )
+        CrlDownloader.run()
+
+    def is_local_crl_valid(self) -> bool:
+        """Checks whether the local CRL is valid.
+
+        Keep in mind that to get updated results, you should run the update_all
+        method first.
+
+        Returns
+        -------
+        bool
+        """
+        if CrlDownloader.was_download_interrupted:
+            return False
+
+        if CrlDownloader.is_crl_update_available():
+            return False
+
+        return True
+
+    def is_uvci_revoked(self, uvci: str) -> bool:
+        """Checks whether the uvci is revoked or not.
+
+        Parameters
+        ----------
+        uvci: str
+
+        Returns
+        -------
+        bool
+        """
+        db = MongoCRL()
+        return db.is_uvci_revoked(uvci)
 
     def update_settings(self) -> None:
         """Force update settings from apis."""
@@ -149,70 +172,6 @@ class Service:
         dump_to_cache(SETTINGS_FILE_CACHE_PATH, settings_data)
         return settings_data
 
-    @classmethod
-    def _fetch_crl(cls) -> list:
-
-        class UcviList(TypedDict):
-            new: list[str]
-            removed: list[str]
-
-        def fetch_crl_check() -> dict:
-            response = requests.get(CHECK_CRL_URL)
-            crl_check = response.json()
-            dump_to_cache(CRL_FILE_CACHE, crl_check)
-            return crl_check
-
-        def has_version_increased(crl_check: dict) -> bool:
-            old_check, _ = load_cached_file(CRL_FILE_CACHE)
-            return crl_check["version"] > old_check["version"]
-
-        def fetch_chunks(parameters: dict, already_fetched_ucvis: UcviList):
-            prepare_parameters_for_next_request(parameters)
-            response = requests.get(DOWNLOAD_CRL_URL, params=parameters)
-            chunk = response.json()
-            just_fetched_ucvis = get_ucvis_from_chunk(chunk)
-            all_fetched_ucvis = concatenate_ucvis_lists(already_fetched_ucvis, just_fetched_ucvis)
-
-            if is_chunk_last(chunk):
-                return all_fetched_ucvis
-
-            return fetch_chunks(parameters, already_fetched_ucvis)
-
-
-        def prepare_parameters_for_next_request(parameters: dict) -> None:
-            if "chunk" in parameters and type(parameters["chunk"]) == int:
-                parameters["chunk"] += 1
-            else:
-                parameters["chunk"] = 1
-
-        def is_chunk_last(chunk: dict) -> bool:
-            return chunk["lastChunk"] == chunk["chunk"]
-
-        def get_ucvis_from_chunk(chunk: dict) -> UcviList:
-            if "delta" in chunk:
-                delta = chunk["delta"]
-                return {
-                    "new": delta["insertions"],
-                    "removed": delta["deletions"]
-                }
-
-            return {
-                "new": chunk["revokedUcvi"],
-                "removed": []
-            }
-
-        def concatenate_ucvis_lists(list_1: UcviList, list_2: UcviList) -> UcviList:
-            return {
-                "new": list_1["new"] + list_2["new"],
-                "removed": list_1["removed"] + list_2["removed"]
-            }
-
-        ucvis = fetch_chunks({"version": 30}, {"new": [], "removed": []})
-        print(ucvis["new"])
-        print(ucvis["removed"])
-
-
-        return []
 
 
 _service = Service()
