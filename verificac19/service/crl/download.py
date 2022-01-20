@@ -43,7 +43,7 @@ class CrlDownloader:
 
             cls._set_download_started_in_db()
             try:
-                chunks = cls._download_crl(cls._params)
+                chunks = cls._download_crl()
                 return DOWNLOAD_SUCCESSFUL
             except (RequestException, JSONDecodeError):
                 errors_left -= 1
@@ -106,22 +106,22 @@ class CrlDownloader:
         cls._db.set_meta_data(**data)
 
     @classmethod
-    def _download_crl(cls, params: dict):
+    def _download_crl(cls):
         download_not_completed = True
-        if not params.get('chunk'):
-            params['chunk'] = 1
+        if not cls._params.get('chunk'):
+            cls._params['chunk'] = 1
         while download_not_completed:
-            chunk = cls._download_chunk(params)
+            chunk = cls._download_chunk()
             download_not_completed = not chunk.is_chunk_last()
             cls._save_chunk_to_db(chunk)
-            params['chunk'] += 1
+            cls._params['chunk'] += 1
 
         downloaded_version = cls._check.get_server_version()
         cls._db.set_meta_data(in_progress=False, version=downloaded_version)
 
     @classmethod
-    def _download_chunk(cls, request_params: dict) -> Chunk:
-        response = requests.get(DOWNLOAD_CRL_URL, params=request_params)
+    def _download_chunk(cls) -> Chunk:
+        response = requests.get(DOWNLOAD_CRL_URL, params=cls._params)
         response.raise_for_status()
         chunk_data = response.json()
         return Chunk(chunk_data)
