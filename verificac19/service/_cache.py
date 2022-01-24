@@ -45,7 +45,7 @@ def fetch_with_smart_cache(
         else:
             return fetch_from_source()
 
-    data, creation_date = _load_cached_file(file_path)
+    data, creation_date = load_cached_file(file_path)
 
     if force_cache:
         return data
@@ -56,7 +56,7 @@ def fetch_with_smart_cache(
     return fetch_from_source()
 
 
-def _load_cached_file(file_path: str) -> Tuple[dict, datetime]:
+def load_cached_file(file_path: str) -> Tuple[dict, datetime]:
     with open(file_path, "r") as input:
         data_with_date = json.load(input)
 

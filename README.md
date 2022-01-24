@@ -12,6 +12,7 @@
 ## Requirements
 
 - Python version >= 3.7
+- MongoDB version >= 5.x (used to store CRL)
 
 Make sure `zbar` is installed in your system. [Source](https://pypi.org/project/pyzbar/).
   * For Mac OS X, it can be installed via `brew install zbar`
@@ -26,9 +27,9 @@ pip install verificac19
 
 ## Usage
 
-### Download and cache rules and DSCs
+### Download and cache rules, CRL data and DSCs
 
-You can download and cache rules and DSCs using `service`.
+You can download and cache rules, CRL Data and DSCs using `service`.
 
 ```python
 from verificac19 import service
@@ -44,6 +45,10 @@ from verificac19.exceptions import VerificaC19Error
 
 ⚠️ By default rules and DSCs will be cached in local folder, 
 to change it please set `VC19_CACHE_FOLDER` env variable.
+
+⚠️ CRL data will be stored in a MongoDB database. By default the
+connection string is `mongodb://root:example@localhost:27017/VC19?authSource=admin`,
+if you want to change it, set `VC19_MONGODB_URL` env variable.
 
 ### Verify a DCC
 
@@ -72,12 +77,14 @@ result = verifier.verify_raw("HC1:GH.....1GH")
 
 you can compare the resulting `code` with `verifier.Codes` values
 
-| | Code            | Description                              |
-|-| --------------- | ---------------------------------------- |
-|✅| VALID           | Certificate is valid                     |
-|❌| NOT_VALID       | Certificate is not valid                 | 
-|❌| NOT_VALID_YET   | Certificate is not valid yet             | 
-|❌| NOT_EU_DCC      | Certificate is not an EU DCC             | 
+| | Code            | Description                              | Result |
+|-| --------------- | ---------------------------------------- | ------ |
+|✅| VALID           | Certificate is valid                     | `True` |
+|⚠️| TEST_NEEDED     | Test needed if verification mode is BOOSTER_DGP | `False` |
+|❌| NOT_VALID       | Certificate is not valid                 | `False` |
+|❌| NOT_VALID_YET   | Certificate is not valid yet             | `False` |
+|❌| REVOKED   | Certificate is revoked           | `False` |
+|❌| NOT_EU_DCC      | Certificate is not an EU DCC             | `False` |
 
 for example 
 
@@ -105,13 +112,22 @@ result = verifier.verify_image("my_dcc.png", verifier.Mode.SUPER_DGP)
 
 | Code           | Description                              |
 | -------------- | ---------------------------------------- |
-| NORMAL_DGP     | Normal verification (`default value`)    |
+| NORMAL_DGP     | Normal verification (default value)      |
 | SUPER_DGP      | Super Green Pass verification            | 
+| BOOSTER_DGP    | Booster verification mode                | 
 
-***Super Green Pass, which will come into force from 6 December to 15 January 2021, 
-will be a certificate valid only for people who have been vaccinated against 
-or who have recovered from Covid19, and will prevent all the others from 
-entering bars, restaurants, cinemas, gyms, theatres, discos and stadiums.***
+Details
+
+- `SUPER_DGP Mode`: VerificaC19 SDK considers a green certificate valid only for
+people who have been vaccinated against or who have recovered from Covid19, 
+and will prevent all the others from 
+entering bars, restaurants, cinemas, gyms, theatres, discos and stadiums.
+
+- `BOOSTER_DGP Mode`: VerificaC19 SDK considers green certificates generated after a 
+booster dose to be valid. Furthermore, green certificates generated after the 
+first vaccination cycle or recovery with the simultaneous presentation of a 
+digital document certifying the negative result of a SARS-CoV-2 test 
+are considered valid.
 
 ## Development
 
@@ -126,6 +142,11 @@ Make sure `zbar` is installed in your system. [Source](https://pypi.org/project/
   * Debian systems via `apt install libzbar0`
   * Fedora / Red Hat `dnf install zbar`
 
+CRL data will be stored in a MongoDB database. This repository provides a simple 
+`docker-compose.yml` file (dev instance) with a replica set. By default the
+connection string is `mongodb://root:example@localhost:27017/VC19?authSource=admin`,
+if you want to change it, set `VC19_MONGODB_URL` env variable.
+
 ### Run tests
 
 ```
@@ -139,7 +160,7 @@ python -m examples.<example_name>
 ```
 
 ## Authors
-Copyright (c) 2021 - [Lotrèk Digital Agency](https://lotrek.it/)
+Copyright (c) 2022 - [Lotrèk Digital Agency](https://lotrek.it/)
 
 ## Contributors
 Thank you to everyone involved for improving this project, day by day.

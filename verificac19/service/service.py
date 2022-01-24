@@ -1,21 +1,20 @@
 import requests
-from typing import Union, Dict
+from typing import Union
 from datetime import datetime, timedelta
 
 from ._cache import dump_to_cache, fetch_with_smart_cache
 from ..exceptions import VerificaC19Error
 
-Dsc = Dict[str, str]
+from ._settings import (
+    DSC_URL,
+    STATUS_URL,
+    SETTINGS_URL,
+    DSC_FILE_CACHE_PATH,
+    SETTINGS_FILE_CACHE_PATH,
+)
 
-
-API_URL = "https://get.dgc.gov.it/v1/dgc"
-
-DSC_URL = f"{API_URL}/signercertificate/update"
-STATUS_URL = f"{API_URL}/signercertificate/status"
-SETTINGS_URL = f"{API_URL}/settings"
-
-DSC_FILE_CACHE_PATH = "dsc.json"
-SETTINGS_FILE_CACHE_PATH = "settings.json"
+from .crl.download import CrlDownloader
+from .crl.mongo import MongoCRL
 
 
 class Service:
@@ -29,12 +28,45 @@ class Service:
         Restores dsc and settings data from cache if possible.
         Otherwise it retrieves them from the api.
         """
-        self._dsc_collection: Dsc = fetch_with_smart_cache(
+        self._dsc_collection = fetch_with_smart_cache(
             DSC_FILE_CACHE_PATH, self._fetch_dsc
         )
         self._settings: list = fetch_with_smart_cache(
             SETTINGS_FILE_CACHE_PATH, self._fetch_settings
         )
+        CrlDownloader.run()
+
+    def is_local_crl_valid(self) -> bool:
+        """Checks whether the local CRL is valid.
+
+        Keep in mind that to get updated results, you should run the update_all
+        method first.
+
+        Returns
+        -------
+        bool
+        """
+        if CrlDownloader.was_download_interrupted:
+            return False
+
+        if CrlDownloader.is_crl_update_available():
+            return False
+
+        return True
+
+    def is_uvci_revoked(self, uvci: str) -> bool:
+        """Checks whether the uvci is revoked or not.
+
+        Parameters
+        ----------
+        uvci: str
+
+        Returns
+        -------
+        bool
+        """
+        db = MongoCRL()
+        return db.is_uvci_revoked(uvci)
 
     def update_settings(self) -> None:
         """Force update settings from apis."""
@@ -101,7 +133,7 @@ class Service:
                 )
 
     def _load_from_cache(self) -> None:
-        self._dsc_collection: Dsc = (
+        self._dsc_collection = (
             fetch_with_smart_cache(DSC_FILE_CACHE_PATH, self._fetch_dsc, True) or {}
         )
         self._settings: list = (

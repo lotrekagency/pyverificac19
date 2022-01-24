@@ -142,7 +142,7 @@ def test_certificates_rules():
         False,
         verifier.Codes.TEST_NEEDED,
         "^Test needed$",
-        verifier.Mode.BOOSTER_DGP
+        verifier.Mode.BOOSTER_DGP,
     )
     # Doses 3/2 ok with Booster Mode
     dcc_booster_vaccination = from_image(
@@ -154,7 +154,7 @@ def test_certificates_rules():
         True,
         verifier.Codes.VALID,
         "^Doses 3/2 - Vaccination is valid .*$",
-        verifier.Mode.BOOSTER_DGP
+        verifier.Mode.BOOSTER_DGP,
     )
 
     # Doses 1/1 Johnson with Booster Mode
@@ -167,7 +167,7 @@ def test_certificates_rules():
         False,
         verifier.Codes.TEST_NEEDED,
         "^Test needed$",
-        verifier.Mode.BOOSTER_DGP
+        verifier.Mode.BOOSTER_DGP,
     )
     # Doses 2/2 Johnson with Booster Mode
     dcc_johnson_vaccination._payload["v"][-1]["dn"] = 2
@@ -177,7 +177,7 @@ def test_certificates_rules():
         True,
         verifier.Codes.VALID,
         "^Doses 2/2 - Vaccination is valid .*$",
-        verifier.Mode.BOOSTER_DGP
+        verifier.Mode.BOOSTER_DGP,
     )
 
     # Valid test results
@@ -227,7 +227,7 @@ def test_certificates_rules():
         False,
         verifier.Codes.NOT_VALID,
         "^Vaccine is not valid in Booster mode$",
-        verifier.Mode.BOOSTER_DGP
+        verifier.Mode.BOOSTER_DGP,
     )
     traveller.stop()
     # Test result not valid yet

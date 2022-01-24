@@ -27,9 +27,19 @@ jobs:
     - name: Install dependencies 📦
       run: |
         pip install -r requirements-dev.txt
+    - name: Start MongoDB
+      uses: supercharge/mongodb-github-action@1.7.0
+      with:
+        mongodb-version: '4.4'
+        mongodb-replica-set: test-rs
+        mongodb-username: root
+        mongodb-password: example
+        mongodb-db: admin
     - name: Test with pytest and calculate coverage 🧪
       run: |
         make test
+      env:
+        VC19_MONGODB_URL: mongodb://127.0.0.1:27017/VC19
     - name: Upload coverage
       uses: codecov/codecov-action@v2
       env:

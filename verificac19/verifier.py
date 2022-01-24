@@ -272,7 +272,11 @@ class Verifier:
             )
 
         last = payload["r"][-1]
-        cert_info = self._get_dsc_info(service.get_dsc(dcc.kid)) if self._verify_dsc(dcc) else {}
+        cert_info = (
+            self._get_dsc_info(service.get_dsc(dcc.kid))
+            if self._verify_dsc(dcc)
+            else {}
+        )
         recovery_type = (
             "recovery_pv"
             if cert_info.get("country") == "IT"
