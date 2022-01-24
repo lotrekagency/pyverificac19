@@ -1,4 +1,5 @@
 import requests
+from typing import Union
 from verificac19.service.crl.mongo import MongoCRL
 from verificac19.service._settings import CHECK_CRL_URL
 
@@ -22,7 +23,7 @@ class CrlCheck:
 
         return True
 
-    def get_server_version(self) -> int | None:
+    def get_server_version(self) -> Union[int, None]:
         if self._crl_check is None:
             self.fetch_crl_check()
 

@@ -1,11 +1,12 @@
-from json.decoder import JSONDecodeError
 import requests
 from requests import RequestException
-from verificac19.service._settings import *
+from typing import Union
+from json.decoder import JSONDecodeError
+
+from verificac19.service._settings import DOWNLOAD_CRL_URL, MAX_ERRORS_CRL_DOWNLOAD
+
 from .check import CrlCheck
 from .mongo import MongoCRL
-
-from verificac19.service._settings import DOWNLOAD_CRL_URL
 from .chunk import Chunk
 
 DOWNLOAD_SUCCESSFUL = 0
@@ -44,7 +45,7 @@ class CrlDownloader:
 
             cls._set_download_started_in_db()
             try:
-                chunks = cls._download_crl()
+                cls._download_crl()
                 return DOWNLOAD_SUCCESSFUL
             except (RequestException, JSONDecodeError):
                 errors_left -= 1
@@ -88,7 +89,7 @@ class CrlDownloader:
         cls._params = {"chunk": last_stored_chunk}
 
     @classmethod
-    def _get_interrupted_download_version(cls) -> int | None:
+    def _get_interrupted_download_version(cls) -> Union[int, None]:
         version = cls._db.get_meta_data_field("updating_to_version")
         return version
 

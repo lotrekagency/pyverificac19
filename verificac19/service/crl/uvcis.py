@@ -1,7 +1,6 @@
-from verificac19.service._settings import *
-from verificac19.service.crl.mongo import MongoCRL
+from typing import List
 
-UvciList = list[str]
+UvciList = List[str]
 
 
 class UvciData:

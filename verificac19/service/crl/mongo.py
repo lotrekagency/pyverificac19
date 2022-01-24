@@ -1,8 +1,7 @@
-from typing import Any
-
 import os
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError, DuplicateKeyError
+from typing import Any, Union
 
 from ._crl import CRL
 
@@ -27,7 +26,7 @@ class MongoCRL(CRL):
 
         self._db_meta.find_one_and_update({}, {"$set": data})
 
-    def get_meta_data(self, *fields: str, flat: bool = False) -> dict | None:
+    def get_meta_data(self, *fields: str, flat: bool = False) -> Union[dict, None]:
         if len(fields) != 1 and flat:
             raise ValueError("flat can be set only when selecting one field")
 
@@ -41,7 +40,7 @@ class MongoCRL(CRL):
 
         return query_result
 
-    def get_meta_data_field(self, field) -> Any | None:
+    def get_meta_data_field(self, field) -> Union[Any, None]:
         return self.get_meta_data(field, flat=True)
 
     def _initialise_meta_info(self, data: dict):

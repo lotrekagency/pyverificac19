@@ -1,11 +1,17 @@
 import requests
-from typing import Tuple, TypedDict, Union, Dict
+from typing import Union
 from datetime import datetime, timedelta
 
-from ._cache import dump_to_cache, fetch_with_smart_cache, load_cached_file
+from ._cache import dump_to_cache, fetch_with_smart_cache
 from ..exceptions import VerificaC19Error
 
-from ._settings import *
+from ._settings import (
+    DSC_URL,
+    STATUS_URL,
+    SETTINGS_URL,
+    DSC_FILE_CACHE_PATH,
+    SETTINGS_FILE_CACHE_PATH,
+)
 
 from .crl.download import CrlDownloader
 from .crl.mongo import MongoCRL
@@ -22,7 +28,7 @@ class Service:
         Restores dsc and settings data from cache if possible.
         Otherwise it retrieves them from the api.
         """
-        self._dsc_collection: Dsc = fetch_with_smart_cache(
+        self._dsc_collection = fetch_with_smart_cache(
             DSC_FILE_CACHE_PATH, self._fetch_dsc
         )
         self._settings: list = fetch_with_smart_cache(
@@ -127,7 +133,7 @@ class Service:
                 )
 
     def _load_from_cache(self) -> None:
-        self._dsc_collection: Dsc = (
+        self._dsc_collection = (
             fetch_with_smart_cache(DSC_FILE_CACHE_PATH, self._fetch_dsc, True) or {}
         )
         self._settings: list = (
