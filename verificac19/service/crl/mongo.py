@@ -27,12 +27,12 @@ class MongoCRL(CRL):
 
         self._db_meta.find_one_and_update({}, {"$set": data})
 
-    def get_meta_data(self, *fields: str, flat: bool=False) -> dict | None:
+    def get_meta_data(self, *fields: str, flat: bool = False) -> dict | None:
         if len(fields) != 1 and flat:
-            raise ValueError('flat can be set only when selecting one field')
+            raise ValueError("flat can be set only when selecting one field")
 
         projection_settings = {field: True for field in fields}
-        projection_settings['_id'] = False
+        projection_settings["_id"] = False
         query_result = self._db_meta.find_one(projection=projection_settings)
 
         if flat and query_result is not None:
@@ -51,7 +51,7 @@ class MongoCRL(CRL):
         self._bulk_add_uvci(revoked_uvci)
         self._remove_uvci(deleted_revoked_uvci)
 
-    def _bulk_add_uvci(self, revoked_uvci: list=[]):
+    def _bulk_add_uvci(self, revoked_uvci: list = []):
         if len(revoked_uvci) == 0:
             return
 
@@ -60,17 +60,16 @@ class MongoCRL(CRL):
         except BulkWriteError:
             self._iterative_add_uvci(revoked_uvci)
 
-    def _iterative_add_uvci(self, revoked_uvci: list=[]):
+    def _iterative_add_uvci(self, revoked_uvci: list = []):
         for uvci_to_insert in revoked_uvci:
             try:
                 self._db_uvci.insert_one({"_id": uvci_to_insert})
             except DuplicateKeyError:
                 pass
 
-    def _remove_uvci(self, deleted_revoked_uvci: list=[]):
+    def _remove_uvci(self, deleted_revoked_uvci: list = []):
         for uvci_to_remove in deleted_revoked_uvci:
             self._db_uvci.delete_one({"_id": uvci_to_remove})
-
 
     def is_uvci_revoked(self, uvci: str) -> bool:
         return self._db_uvci.find_one({"_id": uvci}) is not None

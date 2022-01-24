@@ -2,8 +2,8 @@ import requests
 from verificac19.service.crl.mongo import MongoCRL
 from verificac19.service._settings import CHECK_CRL_URL
 
-class CrlCheck:
 
+class CrlCheck:
     def __init__(self) -> None:
         self.fetch_crl_check()
         self._db = MongoCRL()
@@ -16,8 +16,8 @@ class CrlCheck:
         if self._crl_check is None:
             self.fetch_crl_check()
 
-        stored_version = self._db.get_meta_data_field('version')
-        if stored_version == self._crl_check['version']:
+        stored_version = self._db.get_meta_data_field("version")
+        if stored_version == self._crl_check["version"]:
             return False
 
         return True
@@ -26,4 +26,4 @@ class CrlCheck:
         if self._crl_check is None:
             self.fetch_crl_check()
 
-        return self._crl_check['version']
+        return self._crl_check["version"]

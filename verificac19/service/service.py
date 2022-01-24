@@ -10,6 +10,7 @@ from ._settings import *
 from .crl.download import CrlDownloader
 from .crl.mongo import MongoCRL
 
+
 class Service:
     def __init__(self):
         self._allowed_kids = []
@@ -171,7 +172,6 @@ class Service:
         settings_data = response.json()
         dump_to_cache(SETTINGS_FILE_CACHE_PATH, settings_data)
         return settings_data
-
 
 
 _service = Service()

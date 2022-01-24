@@ -12,6 +12,7 @@ DOWNLOAD_SUCCESSFUL = 0
 DOWNLOAD_FAILED = -1
 DOWNLOAD_NOT_NEEDED = 1
 
+
 class CrlDownloader:
     _db = MongoCRL()
     _params = {}
@@ -52,7 +53,7 @@ class CrlDownloader:
 
     @classmethod
     def was_download_interrupted(cls) -> bool:
-        return bool(cls._db.get_meta_data_field('in_progress'))
+        return bool(cls._db.get_meta_data_field("in_progress"))
 
     @classmethod
     def is_crl_update_available(cls) -> bool:
@@ -68,11 +69,10 @@ class CrlDownloader:
         elif cls.was_download_interrupted():
             cls._prepare_to_resume_interrupted_download()
         elif cls._check.is_crl_update_available():
-            stored_version = cls._db.get_meta_data_field('version')
-            cls._params = {'version': stored_version}
+            stored_version = cls._db.get_meta_data_field("version")
+            cls._params = {"version": stored_version}
         else:
             cls._is_local_crl_up_to_date = False
-
 
     @classmethod
     def _prepare_to_resume_interrupted_download(cls) -> None:
@@ -84,37 +84,32 @@ class CrlDownloader:
             cls._db.clean_uvcis()
             return
 
-        last_stored_chunk = cls._db.get_meta_data_field('last_stored_chunk')
-        cls._params = {
-            'chunk': last_stored_chunk
-        }
-
-
+        last_stored_chunk = cls._db.get_meta_data_field("last_stored_chunk")
+        cls._params = {"chunk": last_stored_chunk}
 
     @classmethod
     def _get_interrupted_download_version(cls) -> int | None:
-        version = cls._db.get_meta_data_field('updating_to_version')
+        version = cls._db.get_meta_data_field("updating_to_version")
         return version
-
 
     @classmethod
     def _set_download_started_in_db(cls):
         data = {
-            'in_progress': True,
-            'updating_to_version': cls._check.get_server_version()
+            "in_progress": True,
+            "updating_to_version": cls._check.get_server_version(),
         }
         cls._db.set_meta_data(**data)
 
     @classmethod
     def _download_crl(cls):
         download_not_completed = True
-        if not cls._params.get('chunk'):
-            cls._params['chunk'] = 1
+        if not cls._params.get("chunk"):
+            cls._params["chunk"] = 1
         while download_not_completed:
             chunk = cls._download_chunk()
             download_not_completed = not chunk.is_chunk_last()
             cls._save_chunk_to_db(chunk)
-            cls._params['chunk'] += 1
+            cls._params["chunk"] += 1
 
         downloaded_version = cls._check.get_server_version()
         cls._db.set_meta_data(in_progress=False, version=downloaded_version)
@@ -131,4 +126,3 @@ class CrlDownloader:
         uvcis = chunk.get_uvcis()
         cls._db.update_crl(uvcis.get_new(), uvcis.get_removed())
         cls._db.set_meta_data(last_stored_chunk=chunk.get_number())
-
