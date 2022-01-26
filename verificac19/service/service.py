@@ -2,7 +2,7 @@ import requests
 from typing import Union
 from datetime import datetime, timedelta
 
-from ._cache import dump_to_cache, fetch_with_smart_cache
+from ._cache import dump_to_cache, fetch_with_smart_cache, clear_all_cache
 from ..exceptions import VerificaC19Error
 
 from ._settings import (
@@ -154,7 +154,7 @@ class Service:
     def _fetch_dsc(self, token: str = None, dsc_collection: dict = {}) -> dict:
         if not token:
             self._allowed_kids = self._fetch_status()
-        headers = {"X-RESUME-TOKEN": token}
+        headers = {"X-RESUME-TOKEN": token, "content-type": "text/plain"}
         response = requests.get(DSC_URL, headers=headers)
 
         if response.status_code == 200:
@@ -178,6 +178,9 @@ class Service:
         settings_data = response.json()
         dump_to_cache(SETTINGS_FILE_CACHE_PATH, settings_data)
         return settings_data
+
+    def clear_all_cache(self) -> None:
+        clear_all_cache()
 
 
 _service = Service()

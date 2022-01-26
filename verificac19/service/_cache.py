@@ -2,6 +2,7 @@ import os
 import json
 from typing import Any, Callable, Tuple
 from datetime import datetime, timedelta
+import shutil
 
 
 VALID_CACHE_PERIOD = timedelta(days=1)
@@ -72,3 +73,15 @@ def _is_date_valid(date: datetime) -> bool:
     data_age = current_time - date
 
     return data_age < VALID_CACHE_PERIOD
+
+
+def clear_all_cache():
+    for filename in os.listdir(CACHE_DATA_DIRECTORY):
+        file_path = os.path.join(CACHE_DATA_DIRECTORY, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print("Failed to delete cache %s. Reason: %s" % (file_path, e))
