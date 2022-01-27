@@ -18,7 +18,17 @@ class TestService:
             return json.load(file)
 
     @pook.on
-    def test_service(self):
+    def test_dsc_settings(self):
+        settings_data = self.open_json("settings.json")
+        pook.get(SETTINGS_URL, reply=200, response_json=settings_data)
+        service.update_settings()
+        for setting in settings_data:
+            st_name = setting['name']
+            st_type = setting['type']
+            assert service.get_setting(st_name, st_type) == setting
+
+    @pook.on
+    def test_update_all(self):
         pook.get(SETTINGS_URL, reply=200, response_json=self.open_json("settings.json"))
         pook.get(STATUS_URL, reply=200, response_json=self.open_json("certificate_status.json"))
         dsc_validation = self.open_json("dsc_validation.json")
@@ -56,4 +66,3 @@ class TestService:
         )
 
         service.update_all()
-
