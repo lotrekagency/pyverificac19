@@ -71,7 +71,7 @@ class Verifier:
             return Result(
                 self.Codes.NOT_EU_DCC,
                 False,
-                "No vaccination, test or recovery statement found in payload",
+                "No vaccination, test, recovery or exemption statement found in payload",
             )
         last = payload["v"][-1]
         vaccine_type = last["mp"]
@@ -205,7 +205,7 @@ class Verifier:
             return Result(
                 self.Codes.NOT_EU_DCC,
                 False,
-                "No vaccination, test or recovery statement found in payload",
+                "No vaccination, test, recovery or exemption statement found in payload",
             )
         if mode != self.Mode.NORMAL_DGP:
             return Result(
@@ -262,7 +262,7 @@ class Verifier:
             return Result(
                 self.Codes.NOT_EU_DCC,
                 False,
-                "No vaccination, test or recovery statement found in payload",
+                "No vaccination, test, recovery or exemption statement found in payload",
             )
         if mode == self.Mode.BOOSTER_DGP:
             return Result(
@@ -312,6 +312,46 @@ class Verifier:
             "Recovery statement is valid",
         )
 
+    def _check_exemption(self, dcc: dcc.DCC, mode: Mode):
+        payload = dcc.payload
+        if len(payload["e"]) == 0:
+            return Result(
+                self.Codes.NOT_EU_DCC,
+                False,
+                "No vaccination, test, recovery, or exemption statement found in payload",
+            )
+        if mode == self.Mode.BOOSTER_DGP:
+            return Result(
+                self.Codes.TEST_NEEDED,
+                False,
+                "Test needed",
+            )
+
+        last = payload["e"][-1]
+
+        start_date = datetime.strptime(last["df"], "%Y-%m-%d")
+        end_date = datetime.strptime(last["du"], "%Y-%m-%d")
+        now = datetime.now()
+
+        if start_date > now:
+            return Result(
+                self.Codes.NOT_VALID_YET,
+                False,
+                f"Exemption is not valid yet, starts at: {start_date.strftime('%Y-%m-%d')}",
+            )
+        if now > end_date:
+            return Result(
+                self.Codes.NOT_VALID,
+                False,
+                f"Exemption is expired at: {end_date.strftime('%Y-%m-%d')}",
+            )
+
+        return Result(
+            self.Codes.VALID,
+            True,
+            f"Exemption is valid [{start_date.strftime('%Y-%m-%d')} - {end_date.strftime('%Y-%m-%d')}]",
+        )
+
     def _format_dsc(self, dsc: str) -> str:
         return ("-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----").format(
             dsc
@@ -354,6 +394,8 @@ class Verifier:
             result = self._check_test(dcc_obj, mode)
         elif "r" in payload:
             result = self._check_recovery(dcc_obj, mode)
+        elif "e" in payload:
+            result = self._check_exemption(dcc_obj, mode)
         else:
             result = Result(
                 self.Codes.NOT_EU_DCC,
@@ -361,7 +403,7 @@ class Verifier:
                 "No vaccination, test or recovery statement found in payload",
             )
         if result._result and not any(
-            self._verify_uvci(payload, t) for t in ["v", "t", "r"]
+            self._verify_uvci(payload, t) for t in ["v", "t", "r", "e"]
         ):
             result = Result(
                 self.Codes.NOT_VALID,
