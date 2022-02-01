@@ -1,3 +1,4 @@
+from tests.setup import run_all
 
 def pytest_sessionstart(session):
-    pass
+    run_all()
