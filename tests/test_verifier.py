@@ -377,3 +377,53 @@ def test_certificates_rules():
         False,
         verifier.Codes.NOT_VALID,
     )
+
+    # Verify exemption rules
+    exemption_certificate = dcc_without_vaccinations
+    del exemption_certificate._payload["v"]
+    exemption_certificate._payload["e"] = [
+        {
+            "df": "2021-02-15",
+            "du": "2021-12-15",
+            "co": "IT",
+            "ci": "TESTIDFAKEEXEMPTION#2",
+            "is": "",
+            "tg": "",
+        }
+    ]
+
+    traveller = time_machine.travel(dt.datetime(2021, 5, 22))
+    traveller.start()
+    verify_rules_from_certificate(
+        exemption_certificate,
+        True,
+        verifier.Codes.VALID,
+        r"^Exemption is valid \[2021-02-15 - 2021-12-15\]$",
+    )
+
+    verify_rules_from_certificate(
+        exemption_certificate,
+        False,
+        verifier.Codes.TEST_NEEDED,
+        "^Test needed$",
+        verifier.Mode.BOOSTER_DGP,
+    )
+    traveller.stop()
+    traveller = time_machine.travel(dt.datetime(2022, 5, 23))
+    traveller.start()
+    verify_rules_from_certificate(
+        exemption_certificate,
+        False,
+        verifier.Codes.NOT_VALID,
+        "^Exemption is expired at: 2021-12-15$",
+    )
+    traveller.stop()
+    traveller = time_machine.travel(dt.datetime(2020, 5, 22))
+    traveller.start()
+    verify_rules_from_certificate(
+        exemption_certificate,
+        False,
+        verifier.Codes.NOT_VALID_YET,
+        "^Exemption is not valid yet, starts at: 2021-02-15$",
+    )
+    traveller.stop()
