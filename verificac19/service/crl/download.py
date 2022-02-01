@@ -58,7 +58,7 @@ class CrlDownloader:
 
     @classmethod
     def is_crl_update_available(cls) -> bool:
-        return CrlDownloader._check.is_crl_update_available()
+        return cls._check.is_crl_update_available()
 
     @classmethod
     def _prepare_for_download(cls):

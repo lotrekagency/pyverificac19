@@ -6,7 +6,6 @@ from verificac19.service._settings import CHECK_CRL_URL
 
 class CrlCheck:
     def __init__(self) -> None:
-        self.fetch_crl_check()
         self._db = MongoCRL()
 
     def fetch_crl_check(self) -> None:
