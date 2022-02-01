@@ -10,8 +10,8 @@ from verificac19.service._settings import (
     DOWNLOAD_CRL_URL,
 )
 
-class TestService:
 
+class TestService:
     def open_json(self, name: str) -> dict:
         path = os.path.join("tests", "data", "mock_request", name)
         with open(path, "r") as file:
@@ -19,42 +19,43 @@ class TestService:
 
     @pook.on
     def test_dsc_settings(self):
-        self.setup_mock_for_settings()
+        settings_data = self.open_json("settings.json")
+        self.setup_mock_for_settings(settings_data)
         self.setup_mock_for_dsc_certificates()
         service.update_settings()
         for setting in settings_data:
-            st_name = setting['name']
-            st_type = setting['type']
+            st_name = setting["name"]
+            st_type = setting["type"]
             assert service.get_setting(st_name, st_type) == setting
 
-    def setup_mock_for_settings(self):
-        settings_data = self.open_json("settings.json")
+    def setup_mock_for_settings(self, settings_data):
         pook.get(SETTINGS_URL, reply=200, response_json=settings_data)
 
     def setup_mock_for_dsc_certificates(self):
-        FINISHED = 'finished'
-        pook.get(STATUS_URL, reply=200, response_json=self.open_json("dsc_whitelist.json"))
+        FINISHED = "finished"
+        pook.get(
+            STATUS_URL, reply=200, response_json=self.open_json("dsc_whitelist.json")
+        )
         dsc_validation: list = self.open_json("dsc_validation.json")
         dsc_validation.append(FINISHED)
         for index, dsc in enumerate(dsc_validation):
             kwargs = {}
             headers = {"content-type": "text/plain"}
-            kwargs['reply'] = 200
+            kwargs["reply"] = 200
             if 0 < index:
-                headers["X-RESUME-TOKEN"] = str(index+1)
-            kwargs['headers'] = headers
+                headers["X-RESUME-TOKEN"] = str(index + 1)
+            kwargs["headers"] = headers
             if dsc == FINISHED:
-                kwargs['reply'] = 204
+                kwargs["reply"] = 204
                 pook.get(DSC_URL, **kwargs)
                 continue
 
-            kwargs['response_body'] = dsc["raw_data"]
-            kwargs['response_headers'] = {
+            kwargs["response_body"] = dsc["raw_data"]
+            kwargs["response_headers"] = {
                 "X-KID": dsc["kid"],
                 "X-RESUME-TOKEN": str(index + 1),
             }
             pook.get(DSC_URL, **kwargs)
-
 
     @pook.on
     def mtest_dsc_certificates(self):
@@ -64,8 +65,8 @@ class TestService:
         service.update_dsc()
         dsc_list = self.open_json("dsc_validation.json")
         for dsc in dsc_list:
-            kid = dsc['kid']
-            data = dsc['raw_data']
+            kid = dsc["kid"]
+            data = dsc["raw_data"]
             stored_dsc = service.get_dsc(kid)
             if kid in not_whitelisted_dsc:
                 assert stored_dsc is None
@@ -73,11 +74,14 @@ class TestService:
 
             assert stored_dsc == data
 
-
     @pook.on
     def test_update_all(self):
         pook.get(SETTINGS_URL, reply=200, response_json=self.open_json("settings.json"))
-        pook.get(STATUS_URL, reply=200, response_json=self.open_json("certificate_status.json"))
+        pook.get(
+            STATUS_URL,
+            reply=200,
+            response_json=self.open_json("certificate_status.json"),
+        )
         dsc_validation = self.open_json("dsc_validation.json")
         for index, dsc in enumerate(dsc_validation):
             header = {"content-type": "text/plain"}
@@ -100,7 +104,9 @@ class TestService:
 
         service.clear_all_cache()
 
-        pook.get(CHECK_CRL_URL, reply=200, response_json=self.open_json("CRL-check-v1.json"))
+        pook.get(
+            CHECK_CRL_URL, reply=200, response_json=self.open_json("CRL-check-v1.json")
+        )
         pook.get(
             f"{DOWNLOAD_CRL_URL}?chunk=1",
             reply=200,
@@ -113,4 +119,3 @@ class TestService:
         )
 
         service.update_all()
-
