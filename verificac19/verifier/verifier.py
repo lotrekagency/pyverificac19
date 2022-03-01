@@ -6,7 +6,7 @@ from OpenSSL import crypto
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
 
-from .service import _service as service
+from verificac19.service import _service as service
 
 
 GENERIC_TYPE = "GENERIC"
