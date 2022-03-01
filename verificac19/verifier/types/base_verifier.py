@@ -26,6 +26,18 @@ OID_BIS_RECOVERY = ["1.3.6.1.4.1.1847.2021.1.3", "1.3.6.1.4.1.0.1847.2021.1.3"]
 
 
 class Verifier:
+
+    GENERIC_TYPE = "GENERIC"
+
+    TEST_RAPID = "LP217198-3"
+    TEST_MOLECULAR = "LP6464-4"
+
+    TEST_DETECTED = "260373001"
+
+    JOHNSON_VACCINE_ID = "EU/1/20/1525"
+
+    OID_BIS_RECOVERY = ["1.3.6.1.4.1.1847.2021.1.3", "1.3.6.1.4.1.0.1847.2021.1.3"]
+
     class Codes(Enum):
         NOT_EU_DCC = "NOT_EU_DCC"
         NOT_VALID = "NOT_VALID"
@@ -201,10 +213,10 @@ class Verifier:
         now = datetime.now(test_datetime.tzinfo)
 
         start_hours = int(
-            service.get_setting(f"{test_type}_test_start_hours", GENERIC_TYPE)["value"]
+            service.get_setting(f"{test_type}_test_start_hours", self.GENERIC_TYPE)["value"]
         )
         end_hours = int(
-            service.get_setting(f"{test_type}_test_end_hours", GENERIC_TYPE)["value"]
+            service.get_setting(f"{test_type}_test_end_hours", self.GENERIC_TYPE)["value"]
         )
         start_datetime = test_datetime + timedelta(hours=start_hours)
         end_datetime = test_datetime + timedelta(hours=end_hours)
@@ -374,7 +386,8 @@ class Verifier:
                 self.Codes.NOT_EU_DCC,
                 False,
                 "No vaccination, test or recovery statement found in payload",
-            )
+
+   )
         if result._result and not any(
             self._verify_uvci(payload, t) for t in ["v", "t", "r", "e"]
         ):
