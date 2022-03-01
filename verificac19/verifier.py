@@ -16,7 +16,17 @@ TEST_MOLECULAR = "LP6464-4"
 
 TEST_DETECTED = "260373001"
 
-JOHNSON_VACCINE_ID = "EU/1/20/1525"
+JOHNSON = 'EU/1/20/1525';
+SPUTNIK = 'Sputnik-V';
+MODERNA = 'EU/1/20/1507';
+PFIZER = 'EU/1/20/1528';
+ASTRAZENECA = 'EU/1/21/1529';
+COVISHIELD = 'Covishield';
+R_COVI = 'R-COVI';
+COVID19_RECOMBINANT = 'Covid-19-recombinant';
+
+VACCINES_EMA_LIST = [JOHNSON, MODERNA, PFIZER, ASTRAZENECA, COVISHIELD, R_COVI,
+COVID19_RECOMBINANT];
 
 OID_BIS_RECOVERY = ["1.3.6.1.4.1.1847.2021.1.3", "1.3.6.1.4.1.0.1847.2021.1.3"]
 
@@ -66,6 +76,14 @@ class Verifier:
         BOOSTER_DGP = "BOOSTER"
 
     def _check_vaccination(self, dcc: dcc.DCC, mode: Mode):
+        def is_vaccine_ema(vaccine_info: dict, ):
+            vaccine_type = vaccine_info["mp"]
+            if vaccine_type in VACCINES_EMA_LIST:
+                return True
+            if vaccine_type == SPUTNIK and vaccine_info["co"] == "SM":
+                return True
+
+            return False
         payload = dcc.payload
         if len(payload["v"]) == 0:
             return Result(
@@ -82,6 +100,8 @@ class Verifier:
                 False,
                 "Vaccine Sputnik-V is valid only in San Marino",
             )
+
+        is_ema = is_vaccine_ema(last)
 
         not_valid_doses = Result(
             self.Codes.NOT_VALID,
@@ -158,7 +178,7 @@ class Verifier:
                 days=vaccine_end_day_complete
             )
 
-            if vaccine_type == JOHNSON_VACCINE_ID and (
+            if vaccine_type == JOHNSON and (
                 current_dose > necessary_dose
                 or current_dose == necessary_dose
                 and current_dose >= 2
@@ -179,7 +199,7 @@ class Verifier:
                 )
 
             if mode == self.Mode.BOOSTER_DGP:
-                if vaccine_type == JOHNSON_VACCINE_ID:
+                if vaccine_type == JOHNSON:
                     if current_dose == necessary_dose and current_dose < 2:
                         return Result(
                             self.Codes.TEST_NEEDED,
