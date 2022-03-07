@@ -1,4 +1,3 @@
-import requests
 from typing import Union
 from datetime import datetime, timedelta
 
@@ -12,6 +11,7 @@ from ._settings import (
     DSC_FILE_CACHE_PATH,
     SETTINGS_FILE_CACHE_PATH,
 )
+from ._http import http_get
 
 from .crl.download import CrlDownloader
 from .crl.mongo import MongoCRL
@@ -146,7 +146,7 @@ class Service:
         self._settings = self._fetch_settings()
 
     def _fetch_status(self) -> dict:
-        response = requests.get(STATUS_URL)
+        response = http_get(STATUS_URL)
         if response.status_code == 200:
             return response.json()
         raise VerificaC19Error("Error fetching status")
@@ -155,7 +155,7 @@ class Service:
         if not token:
             self._allowed_kids = self._fetch_status()
         headers = {"X-RESUME-TOKEN": token, "content-type": "text/plain"}
-        response = requests.get(DSC_URL, headers=headers)
+        response = http_get(DSC_URL, headers=headers)
 
         if response.status_code == 200:
             pass
@@ -172,7 +172,7 @@ class Service:
         return self._fetch_dsc(x_resume_token, dsc_collection)
 
     def _fetch_settings(self) -> list:
-        response = requests.get(SETTINGS_URL)
+        response = http_get(SETTINGS_URL)
         if not response.status_code == 200:
             raise VerificaC19Error("Error fetching settings")
         settings_data = response.json()

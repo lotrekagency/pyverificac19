@@ -1,10 +1,10 @@
-import requests
 from requests import RequestException
 from typing import Union
 from json.decoder import JSONDecodeError
 
 from verificac19.service._settings import DOWNLOAD_CRL_URL, MAX_ERRORS_CRL_DOWNLOAD
 
+from .._http import http_get
 from .check import CrlCheck
 from .mongo import MongoCRL
 from .chunk import Chunk
@@ -117,7 +117,7 @@ class CrlDownloader:
 
     @classmethod
     def _download_chunk(cls) -> Chunk:
-        response = requests.get(DOWNLOAD_CRL_URL, params=cls._params)
+        response = http_get(DOWNLOAD_CRL_URL, params=cls._params)
         response.raise_for_status()
         chunk_data = response.json()
         return Chunk(chunk_data)

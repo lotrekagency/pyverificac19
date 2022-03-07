@@ -88,6 +88,8 @@ def test_invalid_certificates():
 
 
 def test_certificates_rules():
+    traveller = time_machine.travel(dt.datetime(2022, 1, 22))
+    traveller.start()
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_1.png"),
         False,
@@ -179,6 +181,7 @@ def test_certificates_rules():
         "^Doses 2/2 - Vaccination is valid .*$",
         verifier.Mode.BOOSTER_DGP,
     )
+    traveller.stop()
 
     # Valid test results
     traveller = time_machine.travel(dt.datetime(2021, 5, 22))

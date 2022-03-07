@@ -1,7 +1,8 @@
-import requests
 from typing import Union
 from verificac19.service.crl.mongo import MongoCRL
 from verificac19.service._settings import CHECK_CRL_URL
+
+from .._http import http_get
 
 
 class CrlCheck:
@@ -9,7 +10,7 @@ class CrlCheck:
         self._db = MongoCRL()
 
     def fetch_crl_check(self) -> None:
-        response = requests.get(CHECK_CRL_URL)
+        response = http_get(CHECK_CRL_URL)
         self._crl_check = response.json()
 
     def is_crl_update_available(self) -> bool:
