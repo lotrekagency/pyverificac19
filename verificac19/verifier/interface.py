@@ -6,7 +6,7 @@ from OpenSSL import crypto
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
 
-from .service import _service as service
+from verificac19.service import _service as service
 
 
 GENERIC_TYPE = "GENERIC"
@@ -76,7 +76,8 @@ class Verifier:
         BOOSTER_DGP = "BOOSTER"
 
     def _check_vaccination(self, dcc: dcc.DCC, mode: Mode):
-        def is_vaccine_ema(vaccine_info: dict, ):
+
+        def is_vaccine_ema(vaccine_info: dict):
             vaccine_type = vaccine_info["mp"]
             if vaccine_type in VACCINES_EMA_LIST:
                 return True
@@ -84,6 +85,8 @@ class Verifier:
                 return True
 
             return False
+
+
         payload = dcc.payload
         if len(payload["v"]) == 0:
             return Result(
