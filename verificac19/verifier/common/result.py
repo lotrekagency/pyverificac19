@@ -1,3 +1,4 @@
+from .info import Codes
 
 class Result:
     def __init__(
@@ -28,3 +29,9 @@ class Result:
             "person": self._name,
             "date_of_birth": self._date_of_birth,
         }
+
+NOTHING_FOUND_RESULT = Result(
+    Codes.NOT_EU_DCC.value,
+    False,
+    "No vaccination, test, recovery or exemption statement found in payload",
+)
