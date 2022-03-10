@@ -8,7 +8,7 @@ from dcc_utils.exceptions import DCCParsingError
 
 from verificac19.service import _service as service
 
-from .result import Result
+from .common.result import Result
 
 GENERIC_TYPE = "GENERIC"
 

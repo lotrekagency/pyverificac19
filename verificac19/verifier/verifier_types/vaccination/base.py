@@ -1,7 +1,7 @@
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
 from verificac19.verifier.verifier_types.base import BaseVerifier
-from verificac19.verifier.result import Result
+from verificac19.verifier.common.result import Result
 
 class BaseVaccination(BaseVerifier):
 
