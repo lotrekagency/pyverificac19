@@ -5,6 +5,7 @@ class BaseVerifier:
 
     def __init__(self, dcc: dcc.DCC):
         self.dcc = dcc
+        self.payload = self.dcc.payload
 
-    def result(self):
+    def calculate_result(self):
         raise NotImplementedError
