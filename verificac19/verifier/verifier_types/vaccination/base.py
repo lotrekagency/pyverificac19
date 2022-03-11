@@ -1,9 +1,9 @@
 from typing import Union
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
-from verificac19.exceptions import VerificationComplete as vc
 from verificac19.verifier.verifier_types.base import BaseVerifier
-from verificac19.verifier.common.result import Result, NOTHING_FOUND_RESULT
+from verificac19.verifier.common.result import Result, NOTHING_FOUND_RESULT, ResultOrNone
+from verificac19.verifier.decorators import VerifierCheck
 
 from verificac19.verifier.common.info import (
     VACCINES_EMA_LIST,
@@ -16,14 +16,12 @@ class BaseVaccination(BaseVerifier):
         super().__init__(dcc, *args, **kwargs)
         self.store_last_vaccination()
 
-    def verify(self) -> None:
-        return self.verify_payload_content()
-
-    def verify_payload_content(self):
+    @VerifierCheck()
+    def verify_payload_content(self) -> ResultOrNone:
         if not self.payload.get("v"):
-            raise vc(NOTHING_FOUND_RESULT)
+            return NOTHING_FOUND_RESULT
         if len(self.payload["v"]) == 0:
-            raise vc(NOTHING_FOUND_RESULT)
+            return NOTHING_FOUND_RESULT
 
     def store_last_vaccination(self) -> None:
         all_vaccinations = self.payload["v"]

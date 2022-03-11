@@ -1,4 +1,5 @@
 from .info import Codes
+from typing import Union
 
 class Result:
     def __init__(
@@ -35,3 +36,5 @@ NOTHING_FOUND_RESULT = Result(
     False,
     "No vaccination, test, recovery or exemption statement found in payload",
 )
+
+ResultOrNone = Union[Result, None]
