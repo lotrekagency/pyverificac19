@@ -16,8 +16,8 @@ class BaseVaccination(BaseVerifier):
         super().__init__(dcc, *args, **kwargs)
         self.store_last_vaccination()
 
-    def start_verification(self) -> Union[Result, None]:
-        self.verify_payload_content()
+    def verify(self) -> None:
+        return self.verify_payload_content()
 
     def verify_payload_content(self):
         if not self.payload.get("v"):
