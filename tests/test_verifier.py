@@ -100,6 +100,8 @@ def test_certificates_rules():
         verifier.Codes.NOT_VALID,
         "^Doses 1/2 - Vaccination is expired at .*$",
     )
+    traveller = time_machine.travel(dt.datetime(2021, 10, 1))
+    traveller.start()
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_3.png"),
         True,
@@ -118,6 +120,9 @@ def test_certificates_rules():
         verifier.Codes.VALID,
         "^Doses 1/1 - Vaccination is valid .*$",
     )
+    traveller.stop()
+    traveller = time_machine.travel(dt.datetime(2022, 1, 1))
+    traveller.start()
     verify_rules_from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_6.png"),
         False,
@@ -156,12 +161,16 @@ def test_certificates_rules():
         "^Doses 3/2 - Vaccination is valid .*$",
         verifier.Mode.BOOSTER_DGP,
     )
+    traveller.stop()
 
     # Doses 1/1 Johnson with Booster Mode
     dcc_johnson_vaccination = from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SK_5.png"),
     )
     dcc_johnson_vaccination._payload["v"][-1]["mp"] = "EU/1/20/1525"
+
+    traveller = time_machine.travel(dt.datetime(2021, 6, 20))
+    traveller.start()
     verify_rules_from_certificate(
         dcc_johnson_vaccination,
         False,
@@ -179,6 +188,7 @@ def test_certificates_rules():
         "^Doses 2/2 - Vaccination is valid .*$",
         verifier.Mode.BOOSTER_DGP,
     )
+    traveller.stop()
 
     # Valid test results
     traveller = time_machine.travel(dt.datetime(2021, 5, 22))
