@@ -12,12 +12,10 @@ import inspect
 
 class BaseVerifier:
 
-    asserters = {
-        'vaccination': None,
-        'recovery': None,
-        'test': None,
-        'esemption': None,
-    }
+    vaccination = None
+    recovery = None
+    test = None,
+    esemption = None,
 
 
     def __init__(self, dcc: dcc.DCC):
@@ -42,7 +40,7 @@ class BaseVerifier:
 
     def _set_asserter(self):
         asserter_name = self._certificate_type.value
-        AsserterClass = self.asserters.get(asserter_name)
+        AsserterClass = getattr(self, asserter_name)
         error_msg = f"Expected subclass of BaseAsserter, got {AsserterClass}"
 
         if inspect.isclass(AsserterClass):
