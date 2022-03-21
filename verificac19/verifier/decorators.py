@@ -1,11 +1,11 @@
 from typing import Any, Callable
 
-class VerifierCheck:
+class AsserterCheck:
     checks_count = -1
 
     def __init__(self):
-        VerifierCheck.checks_count += 1
+        AsserterCheck.checks_count += 1
 
     def __call__(self, fun: Callable) -> Callable:
-        fun.verifier_check_order = VerifierCheck.checks_count
+        fun.asserter_check_order = AsserterCheck.checks_count
         return fun
