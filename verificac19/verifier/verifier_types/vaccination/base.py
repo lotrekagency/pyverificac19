@@ -1,7 +1,7 @@
 from typing import Union
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
-from verificac19.verifier.verifier_types.base import BaseVerifier
+from ..base import BaseVerifier
 from verificac19.verifier.common.result import Result, NOTHING_FOUND_RESULT, ResultOrNone
 from verificac19.verifier.decorators import VerifierCheck
 
