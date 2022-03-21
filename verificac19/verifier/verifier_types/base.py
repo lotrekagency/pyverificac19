@@ -2,7 +2,6 @@ from enum import Enum, auto
 from typing import Any, Callable, Union, Tuple, List
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
-from verificac19.verifier.decorators import AsserterCheck
 from .certificate_types import CertificateType
 from verificac19.verifier.common.result import NOTHING_FOUND_RESULT
 from verificac19.verifier.asserters import BaseAsserter

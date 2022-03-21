@@ -31,7 +31,14 @@ class Result:
             "date_of_birth": self._date_of_birth,
         }
 
-NOTHING_FOUND_RESULT = Result(
+NOTHING_FOUND = Result(
+    Codes.NOT_EU_DCC.value,
+    False,
+    "No vaccination, test, recovery or exemption statement found in payload",
+)
+
+
+NOT_EU_DCC = Result(
     Codes.NOT_EU_DCC.value,
     False,
     "No vaccination, test, recovery or exemption statement found in payload",
