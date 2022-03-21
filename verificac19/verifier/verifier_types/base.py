@@ -1,36 +1,72 @@
+from enum import Enum, auto
 from typing import Any, Callable, Union, Tuple, List
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
-from verificac19.verifier.decorators import VerifierCheck
+from verificac19.verifier.decorators import AsserterCheck
+from .certificate_types import CertificateType
+from verificac19.verifier.common.result import NOTHING_FOUND_RESULT
+from verificac19.verifier.asserters import BaseAsserter
+import inspect
+
+
 
 class BaseVerifier:
 
+    asserters = {
+        'vaccination': None,
+        'recovery': None,
+        'test': None,
+        'esemption': None,
+    }
+
 
     def __init__(self, dcc: dcc.DCC):
-        self.__store_verifier_check_methods()
-
         self.dcc = dcc
         self.payload = self.dcc.payload
+        self._result = None
+
+
+    def _setup_asserter(self):
+        valid_type = self._check_certificate_type()
+        if not valid_type:
+            return
+
+        self._set_asserter()
 
     def verify(self):
-        for check in self._checks:
-            result = check()
-            if result:
-                return result
+        if self._result:
+            return self._result
 
-    def __store_verifier_check_methods(self):
-        all_properties = self.__list_of_properties()
-        properties_with_order = filter(self.__is_function_verifier_check, all_properties)
-        verifier_checks = sorted(properties_with_order, key=self.__get_verifier_check_order)
-        self._checks = verifier_checks
+        self._result = self._asserter.run_checks()
+        return self._result
 
-    def __list_of_properties(self):
-        properties_strings = dir(self)
-        return [ getattr(self, property) for property in properties_strings ]
+    def _set_asserter(self):
+        asserter_name = self._certificate_type.value
+        AsserterClass = self.asserters.get(asserter_name)
+        error_msg = f"Expected subclass of BaseAsserter, got {AsserterClass}"
 
-    def __is_function_verifier_check(self, fun: Any) -> bool:
-        return hasattr(fun, 'verifier_check_order')
+        if inspect.isclass(AsserterClass):
+            raise ValueError(error_msg)
+        if not issubclass(AsserterClass, BaseAsserter):
+            raise ValueError(error_msg)
 
-    def __get_verifier_check_order(self, fun) -> int:
-        order = getattr(fun, 'verifier_check_order', -1)
-        return order
+        self._asserter = AsserterClass(self.dcc)
+
+
+    def _check_certificate_type(self) -> bool:
+        self._certificate_type = None
+
+        if "v" in self.payload:
+            self._certificate_type = CertificateType.VACCINATION
+        elif "r" in self.payload:
+            self._certificate_type = CertificateType.RECOVERY
+        elif "t" in self.payload:
+            self._certificate_type = CertificateType.TEST
+        elif "e" in self.payload:
+            self._certificate_type = CertificateType.ESEMPTION
+
+        if self._certificate_type:
+            return True
+
+        self._result = NOTHING_FOUND_RESULT
+        return False
