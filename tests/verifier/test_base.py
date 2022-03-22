@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 import re
 import time_machine
@@ -20,3 +21,4 @@ def test_base_asserter_time_utils():
     asserter = BaseAsserter(dcc)
     assert 0 == asserter._get_integer_setting("molecular_test_start_hours")
     assert 72 == asserter._get_integer_setting("molecular_test_end_hours")
+    assert (timedelta(hours=0), timedelta(hours=72)) == asserter._get_many_delta_hours_settings("molecular_test_start_hours", "molecular_test_end_hours")
