@@ -4,7 +4,6 @@ import re
 import time_machine
 
 from verificac19.verifier.verifier_types.base import BaseVerifier
-from verificac19.verifier.verifier_types.vaccination.base import BaseVaccination
 from verificac19.verifier.base_asserters import BaseAsserter, TestBaseAsserter
 from dcc_utils.dcc import from_image
 

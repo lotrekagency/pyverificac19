@@ -1,7 +1,7 @@
 from tests.service.setup import run_setup
 from verificac19 import service
 import pook
-from utils import open_json
+from tests.utils import open_json
 
 
 class TestService:

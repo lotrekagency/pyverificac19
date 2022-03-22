@@ -1,5 +1,5 @@
 import pook
-from tests.service.utils import open_json
+from tests.utils import open_json
 from verificac19 import service
 from verificac19.service._settings import (
     DSC_URL,
