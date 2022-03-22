@@ -16,6 +16,5 @@ class TestAsserter(TestBaseAsserter):
 
 
     @AsserterCheck()
-    def check_for_rapid(self):
-        if not self._is_test_rapid():
-            return
+    def check_timing(self):
+        return self._simple_timing_check()
