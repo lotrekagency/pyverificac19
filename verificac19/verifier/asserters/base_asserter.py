@@ -39,7 +39,7 @@ class BaseAsserter:
 
 
     def _get_integer_setting(self, setting: str, type=GENERIC_TYPE) -> int:
-        time = int(service.get_setting(setting, GENERIC_TYPE))
+        time = int(service.get_setting(setting, GENERIC_TYPE)["value"])
         return time
 
     def _get_delta_hours_setting(self, setting: str, type=GENERIC_TYPE) -> timedelta:
