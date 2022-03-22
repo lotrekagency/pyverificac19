@@ -3,7 +3,7 @@ from typing import Any, Callable, Union, Tuple, List
 from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
 from .certificate_types import CertificateType
-from verificac19.verifier.common.result import NOTHING_FOUND_RESULT
+from verificac19.verifier.common.result import NOTHING_FOUND
 from verificac19.verifier.asserters import BaseAsserter
 import inspect
 
@@ -65,5 +65,5 @@ class BaseVerifier:
         if self._certificate_type:
             return True
 
-        self._result = NOTHING_FOUND_RESULT
+        self._result = NOTHING_FOUND
         return False
