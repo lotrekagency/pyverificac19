@@ -1,17 +1,22 @@
 import os
 import re
 import time_machine
-import datetime as dt
 
 from verificac19.verifier.verifier_types.base import BaseVerifier
 from verificac19.verifier.verifier_types.vaccination.base import BaseVaccination
+from verificac19.verifier.asserters import BaseAsserter, TestBaseAsserter
 from dcc_utils.dcc import from_image
 
 
-def test_base_vaccination():
-    image = os.path.join("tests", "data", "eu_test_certificates", "SK_1.png")
+def get_dcc_from_image(image_name:str):
+    image = os.path.join("tests", "data", "eu_test_certificates", image_name)
     dcc = from_image(image)
-    v = BaseVaccination(dcc)
-    result = v.verify()
-    assert result is None
+    return dcc
 
+
+
+def test_base_asserter_time_utils():
+    dcc = get_dcc_from_image("TEST.png")
+    asserter = BaseAsserter(dcc)
+    assert 0 == asserter._get_integer_setting("molecular_test_start_hours")
+    assert 72 == asserter._get_integer_setting("molecular_test_end_hours")

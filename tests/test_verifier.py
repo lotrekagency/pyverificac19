@@ -368,6 +368,8 @@ def test_certificates_rules():
         False,
         verifier.Codes.NOT_VALID,
     )
+    traveller = time_machine.travel(dt.datetime(2021, 7, 25))
+    traveller.start()
     # SM vaccination (Sputnik-V)
     dcc_sm_sputnik = from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SM_1.png"),
@@ -377,6 +379,7 @@ def test_certificates_rules():
         True,
         verifier.Codes.VALID,
     )
+    traveller.stop()
     # Other countries vaccination with Sputnik-V
     dcc_it_sputnik = from_image(
         os.path.join("tests", "data", "eu_test_certificates", "SM_1.png"),
