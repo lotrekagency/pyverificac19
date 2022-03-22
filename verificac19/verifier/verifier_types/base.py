@@ -4,7 +4,7 @@ from dcc_utils import dcc
 from dcc_utils.exceptions import DCCParsingError
 from .certificate_types import CertificateType
 from verificac19.verifier.common.result import NOTHING_FOUND
-from verificac19.verifier.asserters import BaseAsserter
+from verificac19.verifier.base_asserters import BaseAsserter
 import inspect
 
 
