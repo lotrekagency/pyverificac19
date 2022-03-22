@@ -1,3 +1,4 @@
+from typing import Tuple
 from verificac19.verifier.common.result import NOT_EU_DCC, Result
 from datetime import timedelta, datetime
 from .base_asserter import BaseAsserter
@@ -16,20 +17,59 @@ from verificac19.verifier.common.info import (
 class TestBaseAsserter(BaseAsserter):
 
     def _get_molecular_hours(self):
-        settings = self._get_many_delta_hours_settings("molecular_test_start_hours", "molecular_test_end_hours")
-        return settings
+        return self._get_many_delta_hours_settings("molecular_test_start_hours", "molecular_test_end_hours")
 
-    def _get_molecular_test_date(self) -> Timing:
+    def _get_rapid_hours(self):
+        return self._get_many_delta_hours_settings("rapid_test_start_hours", "rapid_test_end_hours")
+
+    def _get_test_date(self) -> datetime:
         test_datetime = datetime.strptime(self.last_test["sc"], "%Y-%m-%dT%H:%M:%S%z")
-        start, end = self._get_molecular_hours()
-        time_validator = DateTimeValidator(test_datetime, start, end)
-        return time_validator.check()
+        return test_datetime
 
     def _is_test_rapid(self):
         return self.last_test["tt"] == TEST_RAPID
 
     def _is_test_molecular(self):
         return self.last_test["tt"] == TEST_MOLECULAR
+
+    def _get_molecular_time_validator(self) -> DateTimeValidator:
+        test_datetime = self._get_test_date()
+        start, end = self._get_molecular_hours()
+        time_validator = DateTimeValidator(test_datetime, start, end)
+        return time_validator
+
+    def _get_rapid_time_validator(self) -> DateTimeValidator:
+        test_datetime = self._get_test_date()
+        start, end = self._get_rapid_hours()
+        time_validator = DateTimeValidator(test_datetime, start, end)
+        return time_validator
+
+    def _simple_timing_check(self):
+        if self._is_test_rapid():
+            tv = self._get_rapid_time_validator()
+        else:
+            tv = self._get_molecular_time_validator()
+
+        timing = tv.check()
+        if timing is Timing.TOO_EARLY:
+            return Result(
+                Codes.NOT_VALID_YET.value,
+                False,
+                f'Test Result is not valid yet, starts at : {tv.start_time_string}',
+            )
+
+        elif timing is Timing.TOO_LATE:
+            return Result(
+                Codes.NOT_VALID.value,
+                False,
+                f'Test Result is expired at : {tv.end_time_string}',
+            )
+
+        return Result(
+            Codes.VALID.value,
+            True,
+            f'Test Result is valid [{tv.start_time_string} - {tv.end_date_string}]'
+        )
 
 
     @AsserterCheck()
